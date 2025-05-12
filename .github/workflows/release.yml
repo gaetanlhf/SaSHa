@@ -1,6 +1,7 @@
 name: Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'v*'
@@ -11,7 +12,90 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build Changelog
+        id: github_release
+        uses: mikepenz/release-changelog-builder-action@v5
+        with:
+          failOnError: true
+          commitMode: true
+          configurationJson: |
+            {
+              "template": "#{{CHANGELOG}}\n\n<h3>Statistics</h3>\n\n- <b>Number of commits</b>: #{{COMMITS}}\n- <b>Number of changed files</b>: #{{CHANGED_FILES}}\n- <b>Added lines</b>: #{{ADDITIONS}}\n- <b>Deleted lines</b>: #{{DELETIONS}}",
+              "pr_template": "#{{TITLE}} (#{{MERGE_SHA}})",
+              "base_branches": ["main"],
+              "tag_resolver": {
+                "method": "sort"
+              },
+              "categories": [
+                {
+                    "title": "## 🦾 Features",
+                    "labels": ["feat"]
+                },
+                {
+                    "title": "## 🐛 Fixes",
+                    "labels": ["fix"]
+                },
+                {
+                    "title": "## 🚀 Performance",
+                    "labels": ["perf"]
+                },
+                {
+                    "title": "## 📘 Documentation",
+                    "labels": ["docs"]
+                },
+                {
+                    "title": "## 🏗️ Refactorings",
+                    "labels": ["refactor"]
+                },
+                {
+                    "title": "## 🤖 CI",
+                    "labels": ["ci"]
+                },
+                {
+                    "title": "## ⚒️ Build",
+                    "labels": ["build"]
+                },
+                {
+                    "title": "## ⏱️ Tests",
+                    "labels": ["test"]
+                },
+                {
+                    "title": "## 🎨 Style",
+                    "labels": ["style"]
+                },
+                {
+                    "title": "## 🧹 Chore",
+                    "labels": ["chore"]
+                },
+                {
+                    "title": "## ↩️ Reverted",
+                    "labels": ["revert"]
+                },
+                {
+                    "title": "## ❔ Uncategorized",
+                    "labels": []
+                }
+              ],
+              "label_extractor": [
+                {
+                    "pattern": "(.+):(.+)",
+                    "target": "$1",
+                    "on_property": "title"
+                }
+              ],
+              "transformers": [
+                {
+                  "pattern": "(.+):(.+)",
+                  "target": "-$2"
+                }
+              ]
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -22,7 +106,6 @@ jobs:
       - name: Set up environment variables
         id: vars
         run: |
-          # Extract tag name without 'refs/tags/' prefix but keep the 'v'
           TAG_NAME=${GITHUB_REF#refs/tags/}
           echo "VERSION=$TAG_NAME" >> $GITHUB_ENV
           echo "RELEASE_NAME=SaSHa-$TAG_NAME" >> $GITHUB_ENV
@@ -44,14 +127,18 @@ jobs:
         run: |
           GOOS=darwin GOARCH=arm64 go build -ldflags="-X 'main.version=${{ env.VERSION }}'" -o ./bin/sasha-darwin-arm64
 
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: SaSHa ${{ env.VERSION }}
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+          name: binaries
+          path: ./bin/*
+          if-no-files-found: error
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "${{ env.VERSION }}"
+          body: ${{ steps.github_release.outputs.changelog }}
           files: |
             ./bin/sasha-linux-amd64
             ./bin/sasha-linux-arm64
