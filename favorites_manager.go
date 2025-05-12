@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 )
 
 type FavoriteEntry struct {
@@ -13,23 +12,6 @@ type FavoriteEntry struct {
 
 type FavoritesData struct {
 	Entries []FavoriteEntry `json:"entries"`
-}
-
-func getFavoritesFilePath() (string, error) {
-	configDir := os.Getenv("SASHA_CONFIG_DIR")
-	if configDir == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		configDir = filepath.Join(homeDir, ".sasha")
-	}
-
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return "", err
-	}
-
-	return filepath.Join(configDir, "favorites.json"), nil
 }
 
 func loadFavorites() (FavoritesData, error) {

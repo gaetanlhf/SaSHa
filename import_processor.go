@@ -394,23 +394,6 @@ type ImportCache struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-func getCacheDir() (string, error) {
-	cacheDir := os.Getenv("SASHA_CACHE_DIR")
-	if cacheDir == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		cacheDir = filepath.Join(homeDir, ".sasha", "cache")
-	}
-
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
-		return "", err
-	}
-
-	return cacheDir, nil
-}
-
 func getCacheFilePath(url string, auth *AuthConfig) (string, string, error) {
 	cacheDir, err := getCacheDir()
 	if err != nil {

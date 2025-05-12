@@ -72,16 +72,7 @@ func main() {
 		return
 	}
 
-	configPath := os.Getenv("SASHA_CONFIG")
-	if configPath == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			fmt.Printf("Error getting user home directory: %v\n", err)
-			os.Exit(1)
-		}
-		configPath = fmt.Sprintf("%s/.sasha/config.yaml", homeDir)
-	}
-
+	configPath := getConfigPath()
 	config, configErr := loadConfig(configPath)
 
 	if configErr != nil && len(config.ImportErrors) > 0 {
@@ -119,15 +110,13 @@ func printHelp() {
 	fmt.Println("Usage: sasha [options]")
 	fmt.Println("\nOptions:")
 	fmt.Println("  -clear-cache       Clear the import cache and exit")
-	fmt.Println("  -refresh-cache      Clear the cache but continue loading the application")
+	fmt.Println("  -refresh-cache     Clear the cache but continue loading the application")
 	fmt.Println("  -clear-history     Clear connection history")
 	fmt.Println("  -clear-favorites   Clear favorites")
 	fmt.Println("  -version           Print version information")
 	fmt.Println("  -help              Show this help message")
 	fmt.Println("\nEnvironment variables:")
-	fmt.Println("  SASHA_CONFIG       Path to config file (default: ~/.sasha/config.yaml)")
-	fmt.Println("  SASHA_CACHE_DIR    Path to cache directory (default: ~/.sasha/cache)")
-	fmt.Println("  SASHA_CONFIG_DIR   Path to config directory (default: ~/.sasha)")
+	fmt.Println("  SASHA_HOME         Path to SaSHa home directory (default: ~/.sasha)")
 }
 
 func handleApplicationExit(finalModel tea.Model) {

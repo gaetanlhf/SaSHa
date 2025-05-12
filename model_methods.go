@@ -79,7 +79,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						currentGroup := findGroupByPathSlice(&m.config, serverPath)
 						m.sshCommand = buildSSHCommand(server, currentGroup)
 
-						addToHistoryWithConfig(server, serverPath, &m.config)
+						addToHistory(server, serverPath, &m.config)
 
 						m.quitting = true
 						return m, tea.Quit
@@ -92,7 +92,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						currentGroup := findGroupByPathSlice(&m.config, serverPath)
 						m.sshCommand = buildSSHCommand(server, currentGroup)
 
-						addToHistoryWithConfig(server, serverPath, &m.config)
+						addToHistory(server, serverPath, &m.config)
 
 						m.quitting = true
 						return m, tea.Quit
@@ -126,7 +126,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					serverName = strings.TrimPrefix(serverName, "⭐ ")
 					server := m.findServer(serverName)
 					if server != nil {
-						addToHistoryWithConfig(server, m.currentPath, &m.config)
+						addToHistory(server, m.currentPath, &m.config)
 
 						m.sshCommand = buildSSHCommand(server, findGroupByPathSlice(&m.config, m.currentPath))
 						m.quitting = true

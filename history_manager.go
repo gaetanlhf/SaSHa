@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -15,23 +14,6 @@ type HistoryEntry struct {
 
 type HistoryData struct {
 	Entries []HistoryEntry `json:"entries"`
-}
-
-func getHistoryFilePath() (string, error) {
-	configDir := os.Getenv("SASHA_CONFIG_DIR")
-	if configDir == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		configDir = filepath.Join(homeDir, ".sasha")
-	}
-
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return "", err
-	}
-
-	return filepath.Join(configDir, "history.json"), nil
 }
 
 func loadHistory() (HistoryData, error) {
@@ -86,16 +68,7 @@ func clearHistory() error {
 	return os.WriteFile(historyPath, data, 0644)
 }
 
-func addToHistory(server *Server, path []string) error {
-	config, err := loadConfig(getConfigPath())
-	if err != nil {
-		return err
-	}
-
-	return addToHistoryWithConfig(server, path, &config)
-}
-
-func addToHistoryWithConfig(server *Server, path []string, config *Config) error {
+func addToHistory(server *Server, path []string, config *Config) error {
 	historySize := config.HistorySize
 	if historySize == 0 {
 		return nil
@@ -169,16 +142,4 @@ func serverExistsInMap(name, host string, serverMap map[string]struct{}) bool {
 	key := name + ":" + host
 	_, exists := serverMap[key]
 	return exists
-}
-
-func getConfigPath() string {
-	configPath := os.Getenv("SASHA_CONFIG")
-	if configPath == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return ""
-		}
-		configPath = filepath.Join(homeDir, ".sasha", "config.yaml")
-	}
-	return configPath
 }
