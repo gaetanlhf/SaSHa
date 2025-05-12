@@ -5,7 +5,6 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/truncate"
-	"github.com/muesli/reflow/wordwrap"
 )
 
 func truncateBreadcrumb(breadcrumb string, maxWidth int) string {
@@ -70,12 +69,4 @@ func truncateText(text string, maxWidth int) string {
 	}
 
 	return truncate.StringWithTail(text, uint(maxWidth), "...")
-}
-
-func wrapText(text string, maxWidth int) string {
-	if lipgloss.Width(text) <= maxWidth {
-		return text
-	}
-
-	return wordwrap.String(text, maxWidth)
 }
