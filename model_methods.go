@@ -180,11 +180,15 @@ func (m model) View() string {
 	favoritesStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(favoritesColor))
 	separatorStyle := helpStyle
 
+	maxBreadcrumbWidth := m.width - 4
+
 	if m.inHistoryView {
 		breadcrumb := historyStyle.Render("🕒 History")
+		breadcrumb = truncateBreadcrumb(breadcrumb, maxBreadcrumbWidth)
 		content.WriteString(breadcrumb + "\n\n")
 	} else if m.inFavoritesView {
 		breadcrumb := favoritesStyle.Render("⭐ Favorites")
+		breadcrumb = truncateBreadcrumb(breadcrumb, maxBreadcrumbWidth)
 		content.WriteString(breadcrumb + "\n\n")
 	} else {
 		breadcrumb := homeStyle.Render("🏠 Home")
@@ -208,6 +212,7 @@ func (m model) View() string {
 				}
 			}
 		}
+		breadcrumb = truncateBreadcrumb(breadcrumb, maxBreadcrumbWidth)
 		content.WriteString(breadcrumb + "\n\n")
 	}
 
