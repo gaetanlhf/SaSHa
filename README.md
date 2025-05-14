@@ -28,14 +28,42 @@ SaSHa (SSH Assistant) is a terminal-based SSH connection manager designed to sim
 
 ## Installation
 
+### Using Pre-compiled Binaries
+
+SaSHa provides pre-compiled binaries for various platforms through GitHub releases:
+
+```bash
+# Linux (x64)
+curl -L https://github.com/gaetanlhf/SaSHa/releases/latest/download/sasha-linux-amd64 -o sasha
+chmod +x sasha
+sudo mv sasha /usr/local/bin/
+
+# Linux (ARM64)
+curl -L https://github.com/gaetanlhf/SaSHa/releases/latest/download/sasha-linux-arm64 -o sasha
+chmod +x sasha
+sudo mv sasha /usr/local/bin/
+
+# macOS (Intel)
+curl -L https://github.com/gaetanlhf/SaSHa/releases/latest/download/sasha-darwin-amd64 -o sasha
+chmod +x sasha
+sudo mv sasha /usr/local/bin/
+
+# macOS (Apple Silicon)
+curl -L https://github.com/gaetanlhf/SaSHa/releases/latest/download/sasha-darwin-arm64 -o sasha
+chmod +x sasha
+sudo mv sasha /usr/local/bin/
+```
+
+You can also manually download the appropriate binary for your system from the [GitHub Releases page](https://github.com/gaetanlhf/SaSHa/releases).
+
 ### Building from Source
 
-First, ensure you have **Golang** (1.16 or newer) installed on your machine.
+If you prefer to build from source, ensure you have **Golang** (1.23 or newer) installed on your machine.
 
 ```bash
 # Clone the repository
 git clone https://github.com/gaetanlhf/SaSHa.git
-cd sasha
+cd SaSHa
 
 # Build the application
 make build
@@ -50,10 +78,10 @@ SaSHa uses a YAML configuration file to define server groups, individual servers
 
 ### Configuration File Location
 
-By default, SaSHa looks for the configuration file at `~/.sasha/config.yaml`. You can specify a different location by setting the `SASHA_CONFIG` environment variable:
+By default, SaSHa looks for the configuration file at `~/.sasha/config.yaml`. You can specify a different location by setting the `SASHA_HOME` environment variable:
 
 ```bash
-export SASHA_CONFIG=/path/to/your/config.yaml
+export SASHA_HOME=/path/to/your/sasha/directory
 ```
 
 ### Basic Configuration Example
@@ -282,7 +310,7 @@ imports:
       # Basic authentication
       username: user
       password: pass
-      
+
       # Or token-based authentication
       # token: your_access_token
       # header: Authorization  # Optional, defaults to "Authorization"
@@ -372,9 +400,7 @@ Options:
   -help              Show this help message
 
 Environment variables:
-  SASHA_CONFIG       Path to config file (default: ~/.sasha/config.yaml)
-  SASHA_CACHE_DIR    Path to cache directory (default: ~/.sasha/cache)
-  SASHA_CONFIG_DIR   Path to config directory (default: ~/.sasha)
+  SASHA_HOME         Path to SaSHa home directory (default: ~/.sasha)
 ```
 
 ### Navigation
