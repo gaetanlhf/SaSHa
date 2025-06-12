@@ -17,18 +17,20 @@ func getInheritedGroupSettings(group *Group) inheritedSettings {
 		SSHBinary: group.SSHBinary,
 		Color:     group.Color,
 		NoCache:   group.NoCache,
-		Auth:      nil,
 	}
 
 	if len(group.ExtraArgs) > 0 {
 		inherited.ExtraArgs = append([]string{}, group.ExtraArgs...)
 	}
 
-	imports := getImportsFromGroup(group)
-	if len(imports) > 0 {
+	inherited.Auth = getGroupAuth(group)
+
+	if inherited.Auth == nil {
+		imports := getImportsFromGroup(group)
 		for _, imp := range imports {
-			if imp.Auth != nil && inherited.Auth == nil {
+			if imp.Auth != nil {
 				inherited.Auth = imp.Auth
+				break
 			}
 		}
 	}
@@ -37,6 +39,15 @@ func getInheritedGroupSettings(group *Group) inheritedSettings {
 }
 
 func propagateInheritedSettings(config *Config) {
+	var globalAuth *AuthConfig
+	configImports := getImportsFromConfig(config)
+	for _, imp := range configImports {
+		if imp.Auth != nil {
+			globalAuth = imp.Auth
+			break
+		}
+	}
+
 	for _, group := range config.Groups {
 		propagateGroupSettings(group, inheritedSettings{
 			User:      group.User,
@@ -45,7 +56,7 @@ func propagateInheritedSettings(config *Config) {
 			Color:     group.Color,
 			ExtraArgs: group.ExtraArgs,
 			NoCache:   group.NoCache,
-			Auth:      nil,
+			Auth:      globalAuth,
 		})
 	}
 
@@ -118,11 +129,17 @@ func propagateGroupSettings(group *Group, parentSettings inheritedSettings) {
 		settings.NoCache = true
 	}
 
-	imports := getImportsFromGroup(group)
-	if len(imports) > 0 {
+	groupAuth := getGroupAuth(group)
+	if groupAuth != nil {
+		settings.Auth = groupAuth
+	}
+
+	if settings.Auth == nil || settings.Auth == parentSettings.Auth {
+		imports := getImportsFromGroup(group)
 		for _, imp := range imports {
 			if imp.Auth != nil {
 				settings.Auth = imp.Auth
+				break
 			}
 		}
 	}

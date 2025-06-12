@@ -71,7 +71,6 @@ func collectImportDirectivesFromGroup(group *Group, path string) []ImportDirecti
 	}
 
 	imports := getImportsFromGroup(group)
-
 	groupAuth := getGroupAuth(group)
 
 	for i := range imports {
@@ -112,6 +111,15 @@ func collectImportDirectivesFromGroup(group *Group, path string) []ImportDirecti
 
 	for _, subgroup := range group.Groups {
 		subgroupImports := collectImportDirectivesFromGroup(subgroup, currentPath)
+
+		if groupAuth != nil {
+			for i := range subgroupImports {
+				if subgroupImports[i].Auth == nil {
+					subgroupImports[i].Auth = groupAuth
+				}
+			}
+		}
+
 		directives = append(directives, subgroupImports...)
 	}
 
@@ -203,6 +211,9 @@ func getGroupInheritedSettings(config *Config, path string) inheritedSettings {
 	for _, imp := range imports {
 		if imp.NoCache {
 			settings.NoCache = true
+		}
+		if settings.Auth == nil && imp.Auth != nil {
+			settings.Auth = imp.Auth
 		}
 	}
 
@@ -315,6 +326,8 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 				imports[i].Auth = effectiveAuth
 			}
 		}
+
+		applyAuthToSubgroups(group, effectiveAuth)
 	}
 
 	for _, host := range importData.Hosts {
@@ -333,6 +346,22 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 		if len(host.ExtraArgs) == 0 && len(effectiveExtraArgs) > 0 {
 			host.ExtraArgs = append([]string{}, effectiveExtraArgs...)
 		}
+	}
+}
+
+func applyAuthToSubgroups(group *Group, auth *AuthConfig) {
+	if auth == nil {
+		return
+	}
+
+	for _, subgroup := range group.Groups {
+		imports := getImportsFromGroup(subgroup)
+		for i := range imports {
+			if imports[i].Auth == nil {
+				imports[i].Auth = auth
+			}
+		}
+		applyAuthToSubgroups(subgroup, auth)
 	}
 }
 
@@ -731,7 +760,8 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 		nestedImports := getImportsFromGroup(group)
 		for _, nestedImport := range nestedImports {
 			nestedDirective := nestedImport
-			if nestedDirective.Path == "" && directive.Path != "" {
+
+			if nestedDirective.Path == "" {
 				if directive.Path == "" {
 					nestedDirective.Path = group.Name
 				} else {
@@ -755,11 +785,11 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 			if len(nestedDirective.ExtraArgs) == 0 && len(directive.ExtraArgs) > 0 {
 				nestedDirective.ExtraArgs = append([]string{}, directive.ExtraArgs...)
 			}
-
 			if directive.NoCache {
 				nestedDirective.NoCache = true
 			}
-			if directive.Auth != nil && nestedDirective.Auth == nil {
+
+			if nestedDirective.Auth == nil && directive.Auth != nil {
 				nestedDirective.Auth = directive.Auth
 			}
 
