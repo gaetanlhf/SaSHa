@@ -22,8 +22,11 @@ SaSHa (SSH Assistant) is a terminal-based SSH connection manager designed to sim
 - ✅ **Filtering** to quickly find servers in large configurations
 - ✅ **Custom SSH options** per server or group (port, user, additional arguments)
 - ✅ **Theme customization** with colors for servers and groups
-- ✅ **Configuration inheritance** propagating settings from groups to subgroups and servers
-- ✅ **Import functionality** to modularize your server configurations
+- ✅ **Global configuration inheritance** with settings at the root level that cascade to all groups and servers
+- ✅ **Group-level configuration inheritance** propagating settings from groups to subgroups and servers
+- ✅ **Import functionality** to modularize your server configurations with remote URL support
+- ✅ **Authentication for remote imports** with token and basic auth support
+- ✅ **Smart caching system** for remote imports with configurable timeout
 - ✅ **Keyboard shortcuts** for efficient navigation and operation
 
 ## Installation
@@ -130,7 +133,52 @@ hosts:
     color: "#5733FF"  # Custom color for this server
 ```
 
+### Advanced Configuration with Global Settings
+
+For larger setups, you can define global settings that will be inherited by all groups and servers:
+
+```yaml
+# Optional global settings - inherited by everything unless overridden
+user: admin                    # Default user for all servers
+port: 2222                     # Default port for all servers  
+color: "#3366FF"               # Default color theme
+ssh_binary: ssh                # Default SSH binary
+extra_args: ["-o StrictHostKeyChecking=no"]  # Default SSH arguments
+auth:                          # Default auth for remote imports
+  token: global_token
+
+groups:
+  - name: Production
+    color: "#FF5733"  # Overrides global color for this group and its children
+    hosts:
+      - name: Web Server
+        host: web.example.com
+        # Inherits user, port, auth from global settings
+        # But uses Production group's color
+      - name: Database
+        host: db.example.com
+        user: dbadmin  # Overrides global user
+        port: 3306     # Overrides global port
+
+hosts:
+  - name: Home Server
+    host: homeserver.local
+    # Inherits all global settings (user, port, color, ssh_binary, extra_args)
+```
+
 ### Configuration Components
+
+#### Global Configuration Options
+
+At the root level of your configuration, you can optionally define global settings that will be inherited by all groups and servers:
+
+- `user`: Default SSH username for all servers (optional)
+- `port`: Default SSH port for all servers (optional)
+- `color`: Default color theme for all groups and servers (optional)
+- `extra_args`: Default additional SSH command-line arguments for all servers (optional)
+- `ssh_binary`: Default SSH binary to use for all servers (optional)
+- `auth`: Default authentication configuration for remote imports (optional)
+- `no_cache`: Disable caching for all remote imports (optional)
 
 #### Server Configuration Options
 
@@ -138,11 +186,11 @@ Each server can have the following properties:
 
 - `name`: Display name for the server (required)
 - `host`: Hostname or IP address (required)
-- `user`: SSH username (optional)
-- `port`: SSH port (optional, defaults to 22)
-- `color`: Custom color for this server (optional, in hex format)
-- `extra_args`: Additional SSH command-line arguments (optional)
-- `ssh_binary`: Custom SSH binary to use (optional, defaults to "ssh")
+- `user`: SSH username (optional, inherits from parent group or global)
+- `port`: SSH port (optional, inherits from parent group or global, defaults to 22)
+- `color`: Custom color for this server (optional, inherits from parent group or global)
+- `extra_args`: Additional SSH command-line arguments (optional, inherits from parent group or global)
+- `ssh_binary`: Custom SSH binary to use (optional, inherits from parent group or global)
 
 #### Group Configuration Options
 
@@ -151,200 +199,260 @@ Each group can have the following properties:
 - `name`: Display name for the group (required)
 - `hosts`: List of servers in this group
 - `groups`: List of subgroups
-- `color`: Custom color for this group (optional, in hex format)
-- `user`: Default username for all servers in this group (optional)
-- `port`: Default port for all servers in this group (optional)
-- `extra_args`: Default additional SSH arguments for all servers in this group (optional)
-- `ssh_binary`: Default SSH binary for all servers in this group (optional)
+- `color`: Custom color for this group (optional, inherits from parent group or global)
+- `user`: Default username for all servers in this group (optional, inherits from parent group or global)
+- `port`: Default port for all servers in this group (optional, inherits from parent group or global)
+- `extra_args`: Default additional SSH arguments for all servers in this group (optional, inherits from parent group or global)
+- `ssh_binary`: Default SSH binary for all servers in this group (optional, inherits from parent group or global)
+- `auth`: Authentication configuration for imports within this group (optional, inherits from parent group or global)
+- `no_cache`: Disable caching for imports within this group (optional, inherits from parent group or global)
 
 ### Configuration Features
 
-#### Configuration Inheritance
+#### Multi-Level Configuration Inheritance
 
-SaSHa implements a powerful inheritance system for configuration properties. Settings defined at a group level are automatically propagated to all of its children (both subgroups and servers) unless explicitly overridden.
+SaSHa implements a comprehensive multi-level inheritance system for configuration properties. Settings can be defined at multiple levels and are automatically propagated down the hierarchy unless explicitly overridden.
 
-This approach is especially useful in team environments, where common settings (like a team username or standard SSH options) can be defined once and automatically applied to all servers within that group.
+**Inheritance Order (from highest to lowest priority):**
+1. **Global Level** (root of config file)
+2. **Parent Group Level**
+3. **Current Group Level**
+4. **Server Level** (highest priority, final override)
 
-The inheritance applies to the following properties:
+This hierarchical approach is especially powerful in enterprise environments, where organizational standards (like company-wide SSH keys or connection settings) can be defined once at the global level and automatically applied throughout the entire infrastructure.
+
+**The inheritance applies to the following properties:**
 - `user`: SSH username
 - `port`: SSH port
 - `extra_args`: Additional SSH command-line arguments
 - `ssh_binary`: Custom SSH binary
 - `color`: Visual theme color
+- `auth`: Authentication configuration for remote imports
+- `no_cache`: Caching behavior for remote imports
 
-For example:
+**Complete inheritance example:**
 
 ```yaml
+# Optional global settings - only define what you want to standardize
+user: company-admin              # Optional: set if you want a default user
+auth:                           # Optional: set if you use authenticated remote imports
+  token: company_access_token
+
 groups:
   - name: Production
-    user: prod-user         # This user will be inherited by all child items
-    port: 2222              # This port will be inherited by all child items
-    ssh_binary: ssh-custom  # This binary will be inherited by all child items
-    color: "#FF5733"        # This color will be inherited by all child items
-    extra_args: ["-v"]      # These arguments will be inherited by all child items
-
+    # Only override what you need to change
+    color: "#FF0000"  # Make production red for visibility
+    
     hosts:
       - name: Web Server
-        host: web.example.com
-        # Inherits user, port, ssh_binary, color and extra_args from parent
-
+        host: web.prod.company.com
+        # Only 'host' is required, everything else inherits or uses defaults
+        
       - name: Database
-        host: db.example.com
-        user: db-admin      # Overrides the inherited user
-        port: 3333          # Overrides the inherited port
+        host: db.prod.company.com
+        user: db-admin      # Override only if different from global
+        port: 5432          # Override only if different from default (22)
 
     groups:
       - name: Europe
-        color: "#3366FF"    # Overrides the inherited color
+        color: "#FF6600"    # Optional: different color for European servers
+        user: eu-admin      # Optional: different user for European team
+        
         hosts:
-          - name: EU Server
-            host: eu.example.com
-            # Inherits user, port, ssh_binary from Production
-            # But inherits color from Europe
+          - name: EU Web Server
+            host: web.eu.prod.company.com
+            # Minimal config - inherits everything else
+
+# Minimal server config - just needs name and host
+hosts:
+  - name: Jump Host
+    host: jump.company.com
+    # Inherits global user if defined, uses defaults for everything else
 ```
 
-This inheritance system makes it easy to define common settings once at a higher level and have them automatically applied to all nested items, while still allowing for flexibility when you need to override specific settings for individual servers or subgroups.
+This multi-level inheritance system allows you to:
+- **Start simple**: Just define `name` and `host` for servers - everything else is optional
+- **Set standards**: Define global defaults only for settings you want to standardize
+- **Override selectively**: Change only what's different at each level
+- **Maintain consistency**: Ensure common settings are applied automatically
+- **Stay flexible**: Override any setting at any level when needed
 
 #### Importing Configurations
 
 For complex setups, you can split your configuration across multiple files and import them. This is particularly useful for team environments where configurations can be shared, or for organizing large server infrastructures:
 
 ```yaml
-# Main config file
+# Main config file - define only what you want to standardize globally
+user: company-admin     # Optional: only if you want a default user
+auth:                   # Optional: only if you use authenticated remote imports
+  token: company_access_token
+
 imports:
   - file: ~/.sasha/production-servers.yaml
   - file: ~/.sasha/development-servers.yaml
-    user: devuser  # Override settings for all imported servers
+    user: devuser  # Override global user for all imported dev servers
+  - file: https://config.company.com/shared-servers.yaml
+    # Uses global auth automatically if defined
 
 groups:
   - name: Local
+    imports:
+      - file: ~/.sasha/team-servers.yaml
+        # Imported servers inherit Local group settings + global settings
     hosts:
       - name: Localhost
         host: 127.0.0.1
+        # Minimal config - just name and host required
 ```
 
-In the imported files, simply define groups and servers:
+In the imported files, simply define groups and servers that will inherit from the importing context:
 
 ```yaml
 # production-servers.yaml
 groups:
   - name: Production
+    color: "#FF0000"
     hosts:
       - name: Web Server
         host: web.example.com
-        user: admin
+        # Will inherit user, port, auth from main config
+        # Will inherit color from Production group
 hosts:
   - name: Standalone Server
     host: server.example.com
-```
-
-You can also import within groups, which helps organize servers by department, team, or project:
-
-```yaml
-groups:
-  - name: Development
-    imports:
-      - file: ~/.sasha/dev-servers.yaml
-        # Imported servers will be placed in the Development group
+    # Will inherit all settings from main config
 ```
 
 Using version control for your configuration files allows you to track infrastructure changes over time and easily share server access configurations with team members. This approach treats your SSH access management as "configuration as code."
 
-Each import directive can have the following properties:
+**Each import directive supports all the same properties as groups:**
 
 - `file`: Path to the YAML file to import (required)
 - `path`: Group path where the imported items will be placed (optional)
-- `user`: Default username for all imported servers (optional)
-- `port`: Default port for all imported servers (optional)
-- `extra_args`: Default additional SSH arguments for all imported servers (optional)
-- `ssh_binary`: Default SSH binary for all imported servers (optional)
-- `color`: Default color for all imported groups and servers (optional)
+- `user`: Override username for all imported servers (optional)
+- `port`: Override port for all imported servers (optional)
+- `extra_args`: Override additional SSH arguments for all imported servers (optional)
+- `ssh_binary`: Override SSH binary for all imported servers (optional)
+- `color`: Override color for all imported groups and servers (optional)
+- `auth`: Override authentication for nested remote imports (optional)
+- `no_cache`: Override caching behavior for this import (optional)
 
 #### Remote Imports and Caching
 
 SaSHa supports importing configurations from remote URLs, allowing teams to share server configurations from central repositories:
 
 ```yaml
+# Global auth used by all remote imports unless overridden
+auth:
+  token: company_access_token
+
 imports:
   - file: https://config-server.example.com/team-servers.yaml
-    # Credentials for authenticated imports
+    # Uses global auth automatically
+
+  - file: https://other-server.example.com/special-servers.yaml
+    # Override auth for this specific import
     auth:
       username: user
       password: pass
       # Or use a token instead
-      # token: access_token
+      # token: different_access_token
       # header: Authorization  # Optional, defaults to "Authorization"
 ```
 
-Remote imports are cached locally to improve performance and allow offline use. You can control caching behavior:
+Remote imports are cached locally to improve performance and allow offline use. You can control caching behavior at multiple levels:
 
 ```yaml
-# Global cache timeout in hours (default: 24)
-cache_timeout: 48
+# Global cache settings
+cache_timeout: 48  # Cache timeout in hours (default: 24)
+no_cache: false    # Global caching behavior
 
-# Disable caching for specific imports
-imports:
-  - file: https://config-server.example.com/team-servers.yaml
-    no_cache: true  # Always fetch the latest version
+groups:
+  - name: Dynamic Config
+    no_cache: true  # Disable caching for this group's imports
+    imports:
+      - file: https://config-server.example.com/dynamic-servers.yaml
+        # Will not be cached due to group setting
 
-# Disable caching for all imports
-no_cache: true
+  - name: Stable Config
+    imports:
+      - file: https://config-server.example.com/stable-servers.yaml
+        # Uses global cache settings (48 hours)
+
+      - file: https://config-server.example.com/frequently-updated.yaml
+        no_cache: true  # Override to disable cache for this specific import
 ```
 
-You can manually clear the cache using:
+You can manually manage the cache using:
 
 ```bash
-sasha --clear-cache
-# Or refresh without exiting
-sasha --refresh-cache
+sasha --clear-cache      # Clear cache and exit
+sasha --refresh-cache    # Clear cache but continue loading
 ```
 
-#### Authentication for Imports
+#### Authentication for Remote Imports
 
-SaSHa supports authenticated imports with several authentication methods:
-
-```yaml
-imports:
-  - file: https://config-server.example.com/team-servers.yaml
-    auth:
-      # Basic authentication
-      username: user
-      password: pass
-
-      # Or token-based authentication
-      # token: your_access_token
-      # header: Authorization  # Optional, defaults to "Authorization"
-```
-
-Authentication can also be specified at the group level and will be used for all imports within that group:
+SaSHa supports authenticated imports with several authentication methods. Authentication can be configured at any level and will be inherited down the hierarchy:
 
 ```yaml
+# Global authentication - used by all remote imports
+auth:
+  token: global_access_token
+
 groups:
-  - name: Team
+  - name: External Team
+    # Override global auth for this team's imports
     auth:
-      token: team_access_token
+      username: team_user
+      password: team_pass
     imports:
-      - file: https://config-server.example.com/team-servers.yaml
-        # Will use the group's auth configuration
+      - file: https://external-config.example.com/team-servers.yaml
+        # Uses team auth automatically
+
+  - name: Special Projects
+    imports:
+      - file: https://config-server.example.com/public-servers.yaml
+        # Uses global auth
+
+      - file: https://special-server.example.com/private-servers.yaml
+        # Override with specific auth for this import only
+        auth:
+          token: special_project_token
+          header: X-API-Key  # Custom header name
 ```
+
+**Authentication methods supported:**
+- **Basic Authentication**: `username` and `password`
+- **Token Authentication**: `token` with optional custom `header` (defaults to "Authorization")
 
 #### Theme Customization
 
-You can customize the appearance of SaSHa by assigning colors to groups and servers. Colors are specified in hexadecimal format (e.g., `#FF5733`).
-
-Colors defined in groups are inherited by their subgroups and servers unless overridden. This is part of SaSHa's comprehensive inheritance system that applies to colors, SSH settings, and other properties.
+You can customize the appearance of SaSHa by assigning colors at any level. Colors are specified in hexadecimal format (e.g., `#FF5733`) and follow the same inheritance rules as other properties.
 
 ```yaml
+# Global color theme
+color: "#0066CC"  # Company blue for everything
+
 groups:
   - name: Production
-    color: "#FF5733"  # All servers and subgroups will use this color unless overridden
+    color: "#FF0000"  # Override to red for production - critical systems
     hosts:
-      - name: Important Server
-        host: important.example.com
-        color: "#3366FF"  # This server overrides the parent group's color
+      - name: Critical Server
+        host: critical.prod.example.com
+        color: "#FF6600"  # Override to orange - extra attention needed
+
+  - name: Development
+    color: "#00CC66"  # Override to green for development - safe to experiment
+    groups:
+      - name: Staging
+        # Inherits green from Development
+        hosts:
+          - name: Staging Server
+            host: staging.example.com
+            # Inherits green color from Development group
 ```
 
-SaSHa's interface will dynamically update its theme based on your current location in the group hierarchy, reflecting the color associated with your current group or server. This provides visual context about where you are in your server organization.
+SaSHa's interface will dynamically update its theme based on your current location in the group hierarchy, reflecting the color associated with your current group or server. This provides visual context about where you are in your server organization and the criticality level of your current context.
 
 #### History and Favorites
 
