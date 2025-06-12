@@ -50,14 +50,105 @@ func collectImportDirectives(config *Config) []ImportDirective {
 	var directives []ImportDirective
 
 	imports := getImportsFromConfig(config)
+
+	for i := range imports {
+		applyGlobalSettingsToDirective(config, &imports[i])
+	}
+
 	directives = append(directives, imports...)
 
 	for _, group := range config.Groups {
+		applyGlobalSettingsToGroup(config, group)
+
 		groupImports := collectImportDirectivesFromGroup(group, "")
 		directives = append(directives, groupImports...)
 	}
 
 	return directives
+}
+
+func applyGlobalSettings(config *Config) {
+	for _, server := range config.Hosts {
+		applyGlobalSettingsToServer(config, server)
+	}
+
+	for _, group := range config.Groups {
+		applyGlobalSettingsToGroup(config, group)
+	}
+}
+
+func applyGlobalSettingsToDirective(config *Config, directive *ImportDirective) {
+	if directive.User == "" && config.User != "" {
+		directive.User = config.User
+	}
+	if directive.Port == 0 && config.Port != 0 {
+		directive.Port = config.Port
+	}
+	if directive.SSHBinary == "" && config.SSHBinary != "" {
+		directive.SSHBinary = config.SSHBinary
+	}
+	if directive.Color == "" && config.Color != "" {
+		directive.Color = config.Color
+	}
+	if len(directive.ExtraArgs) == 0 && len(config.ExtraArgs) > 0 {
+		directive.ExtraArgs = append([]string{}, config.ExtraArgs...)
+	}
+	if directive.Auth == nil && config.Auth != nil {
+		directive.Auth = config.Auth
+	}
+	if config.NoCache {
+		directive.NoCache = true
+	}
+}
+
+func applyGlobalSettingsToGroup(config *Config, group *Group) {
+	if group.User == "" && config.User != "" {
+		group.User = config.User
+	}
+	if group.Port == 0 && config.Port != 0 {
+		group.Port = config.Port
+	}
+	if group.SSHBinary == "" && config.SSHBinary != "" {
+		group.SSHBinary = config.SSHBinary
+	}
+	if group.Color == "" && config.Color != "" {
+		group.Color = config.Color
+	}
+	if len(group.ExtraArgs) == 0 && len(config.ExtraArgs) > 0 {
+		group.ExtraArgs = append([]string{}, config.ExtraArgs...)
+	}
+	if group.Auth == nil && config.Auth != nil {
+		group.Auth = config.Auth
+	}
+	if config.NoCache {
+		group.NoCache = true
+	}
+
+	for _, server := range group.Hosts {
+		applyGlobalSettingsToServer(config, server)
+	}
+
+	for _, subgroup := range group.Groups {
+		applyGlobalSettingsToGroup(config, subgroup)
+	}
+}
+
+func applyGlobalSettingsToServer(config *Config, server *Server) {
+	if server.User == "" && config.User != "" {
+		server.User = config.User
+	}
+	if server.Port == 0 && config.Port != 0 {
+		server.Port = config.Port
+	}
+	if server.SSHBinary == "" && config.SSHBinary != "" {
+		server.SSHBinary = config.SSHBinary
+	}
+	if server.Color == "" && config.Color != "" {
+		server.Color = config.Color
+	}
+	if len(server.ExtraArgs) == 0 && len(config.ExtraArgs) > 0 {
+		server.ExtraArgs = append([]string{}, config.ExtraArgs...)
+	}
 }
 
 func collectImportDirectivesFromGroup(group *Group, path string) []ImportDirective {

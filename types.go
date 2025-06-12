@@ -10,6 +10,11 @@ type Config struct {
 	ImportErrors     []string          `yaml:"-"`
 	NoCache          bool              `yaml:"no_cache,omitempty"`
 	Auth             *AuthConfig       `yaml:"auth,omitempty"`
+	Color            string            `yaml:"color,omitempty"`
+	User             string            `yaml:"user,omitempty"`
+	Port             int               `yaml:"port,omitempty"`
+	ExtraArgs        []string          `yaml:"extra_args,omitempty"`
+	SSHBinary        string            `yaml:"ssh_binary,omitempty"`
 }
 
 type Group struct {

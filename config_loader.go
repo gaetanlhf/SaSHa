@@ -19,6 +19,8 @@ func loadConfig(path string) (Config, error) {
 		return config, err
 	}
 
+	applyGlobalSettings(&config)
+
 	importErr := ProcessImports(&config, path)
 
 	if importErr != nil && len(config.Groups) == 0 && len(config.Hosts) == 0 {
