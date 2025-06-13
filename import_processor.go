@@ -363,11 +363,7 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 	effectiveColor := inherited.Color
 	effectiveNoCache := inherited.NoCache || directive.NoCache
 	effectiveAuth := inherited.Auth
-
-	var effectiveExtraArgs []string
-	if len(inherited.ExtraArgs) > 0 {
-		effectiveExtraArgs = append([]string{}, inherited.ExtraArgs...)
-	}
+	effectiveExtraArgs := inherited.ExtraArgs
 
 	if directive.User != "" {
 		effectiveUser = directive.User

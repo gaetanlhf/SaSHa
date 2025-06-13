@@ -16,30 +16,29 @@ func buildSSHCommand(server *Server, parentGroup *Group) string {
 		if parentSettings.SSHBinary != "" {
 			sshBinary = parentSettings.SSHBinary
 		}
-
 		if parentSettings.Port != 0 {
 			port = parentSettings.Port
 		}
-
 		if parentSettings.User != "" {
 			user = parentSettings.User
 		}
-
 		if len(parentSettings.ExtraArgs) > 0 {
-			extraArgs = append(extraArgs, parentSettings.ExtraArgs...)
+			extraArgs = append([]string{}, parentSettings.ExtraArgs...)
 		}
 	}
 
 	if server.SSHBinary != "" {
 		sshBinary = server.SSHBinary
 	}
-
 	if server.Port != 0 {
 		port = server.Port
 	}
-
 	if server.User != "" {
 		user = server.User
+	}
+
+	if len(server.ExtraArgs) > 0 {
+		extraArgs = append([]string{}, server.ExtraArgs...)
 	}
 
 	var args []string
@@ -50,10 +49,6 @@ func buildSSHCommand(server *Server, parentGroup *Group) string {
 
 	if len(extraArgs) > 0 {
 		args = append(args, extraArgs...)
-	}
-
-	if len(server.ExtraArgs) > 0 {
-		args = append(args, server.ExtraArgs...)
 	}
 
 	hostStr := server.Host
