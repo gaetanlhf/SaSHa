@@ -782,21 +782,29 @@ func resolveImportPath(importPath, basePath string) string {
 }
 
 func ProcessImports(config *Config, configPath string) error {
-	_ = cleanupCache()
+	updateSpinnerMessage("Cleaning up cache")
+	err := cleanupCache()
+	if err != nil {
+		// Continue even if cleanup fails
+	}
 
 	importDirectives := collectImportDirectives(config)
 
 	config.ImportErrors = []string{}
 	var lastError error
 
-	for _, directive := range importDirectives {
-		err := processImport(directive, config, configPath)
-		if err != nil {
-			config.ImportErrors = append(config.ImportErrors, err.Error())
-			lastError = err
+	if len(importDirectives) > 0 {
+		updateSpinnerMessage("Processing imports")
+		for _, directive := range importDirectives {
+			err := processImport(directive, config, configPath)
+			if err != nil {
+				config.ImportErrors = append(config.ImportErrors, err.Error())
+				lastError = err
+			}
 		}
 	}
 
+	updateSpinnerMessage("Applying inherited settings")
 	propagateInheritedSettings(config)
 
 	return lastError

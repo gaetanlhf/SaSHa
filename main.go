@@ -34,10 +34,11 @@ func main() {
 	}
 
 	if *clearCacheFlag {
-		if err := forceCleanCache(); err != nil {
+		err := showSpinner("Clearing cache", func() error {
+			return forceCleanCache()
+		})
+		if err != nil {
 			fmt.Printf("Error clearing cache: %v\n", err)
-		} else {
-			fmt.Println("Cache cleared successfully")
 		}
 		if !*clearHistoryFlag && !*clearFavoritesFlag {
 			return
@@ -45,18 +46,20 @@ func main() {
 	}
 
 	if *refreshCacheFlag {
-		if err := forceCleanCache(); err != nil {
+		err := showSpinner("Refreshing cache", func() error {
+			return forceCleanCache()
+		})
+		if err != nil {
 			fmt.Printf("Error refreshing cache: %v\n", err)
-		} else {
-			fmt.Println("Cache refreshed successfully")
 		}
 	}
 
 	if *clearHistoryFlag {
-		if err := clearHistory(); err != nil {
+		err := showSpinner("Clearing history", func() error {
+			return clearHistory()
+		})
+		if err != nil {
 			fmt.Printf("Error clearing history: %v\n", err)
-		} else {
-			fmt.Println("History cleared successfully")
 		}
 		if !*clearFavoritesFlag {
 			return
@@ -64,16 +67,22 @@ func main() {
 	}
 
 	if *clearFavoritesFlag {
-		if err := clearFavorites(); err != nil {
+		err := showSpinner("Clearing favorites", func() error {
+			return clearFavorites()
+		})
+		if err != nil {
 			fmt.Printf("Error clearing favorites: %v\n", err)
-		} else {
-			fmt.Println("Favorites cleared successfully")
 		}
 		return
 	}
 
 	configPath := getConfigPath()
-	config, configErr := loadConfig(configPath)
+	var config Config
+	var configErr error
+
+	startSpinner("Loading configuration")
+	config, configErr = loadConfig(configPath)
+	stopSpinner()
 
 	if configErr != nil && len(config.ImportErrors) > 0 {
 		uniqueErrors := dedupErrors(config.ImportErrors)
