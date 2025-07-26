@@ -96,10 +96,22 @@ func filterFavoritesByExistingServers(favoritesData FavoritesData, config *Confi
 	var filteredEntries []FavoriteEntry
 
 	allServers := getAllServersFromConfig(config)
+	validPaths := getAllValidPathsFromConfig(config)
 
 	for _, entry := range favoritesData.Entries {
 		if serverExistsInMap(entry.Server.Name, entry.Server.Host, allServers) {
-			filteredEntries = append(filteredEntries, entry)
+			pathValid := len(entry.Path) == 0
+			if len(entry.Path) > 0 {
+				for _, validPath := range validPaths {
+					if pathsEqual(entry.Path, validPath) {
+						pathValid = true
+						break
+					}
+				}
+			}
+			if pathValid {
+				filteredEntries = append(filteredEntries, entry)
+			}
 		}
 	}
 

@@ -24,6 +24,7 @@ type model struct {
 	inFavoritesView  bool
 	historyData      HistoryData
 	favoritesData    FavoritesData
+	startInGroup     bool
 }
 
 func initialModel(config Config) model {
@@ -55,9 +56,22 @@ func initialModel(config Config) model {
 	l.FilterInput.TextStyle = filterTextStyle
 	l.FilterInput.Cursor.Style = filterCursorStyle
 
-	items := buildGroupItems(config.Groups, []string{}, currentColor)
-	for _, server := range config.Hosts {
-		if server.Group == "" {
+	startInGroup := len(config.Groups) == 1 && len(config.Hosts) == 0
+	var initialPath []string
+	var items []list.Item
+
+	if startInGroup {
+		singleGroup := config.Groups[0]
+		initialPath = []string{singleGroup.Name}
+
+		if singleGroup.Color != "" {
+			currentColor = singleGroup.Color
+			initStyles(currentColor)
+			delegate.currentColor = currentColor
+		}
+
+		items = buildGroupItems(singleGroup.Groups, initialPath, currentColor)
+		for _, server := range singleGroup.Hosts {
 			desc := server.Host
 			if server.User != "" {
 				desc = fmt.Sprintf("%s@%s", server.User, server.Host)
@@ -80,6 +94,33 @@ func initialModel(config Config) model {
 				isMultiline: false,
 			})
 		}
+	} else {
+		items = buildGroupItems(config.Groups, []string{}, currentColor)
+		for _, server := range config.Hosts {
+			if server.Group == "" {
+				desc := server.Host
+				if server.User != "" {
+					desc = fmt.Sprintf("%s@%s", server.User, server.Host)
+				}
+				if server.Port != 0 && server.Port != 22 {
+					desc = fmt.Sprintf("%s:%d", desc, server.Port)
+				}
+
+				serverColor := server.Color
+				if serverColor == "" {
+					serverColor = currentColor
+				}
+
+				items = append(items, item{
+					title:       fmt.Sprintf("💻 %s", server.Name),
+					description: desc,
+					isGroup:     false,
+					path:        "",
+					color:       serverColor,
+					isMultiline: false,
+				})
+			}
+		}
 	}
 
 	l.SetItems(items)
@@ -100,15 +141,20 @@ func initialModel(config Config) model {
 
 	keys := newKeyMap(historyEnabled, config.FavoritesEnabled)
 
+	var breadcrumbColors []string
+	if startInGroup {
+		breadcrumbColors = []string{currentColor}
+	}
+
 	return model{
 		config:           config,
 		list:             l,
 		help:             helpModel,
 		keys:             keys,
 		breadcrumbs:      []string{},
-		breadcrumbColors: []string{},
+		breadcrumbColors: breadcrumbColors,
 		groupStack:       []string{},
-		currentPath:      []string{},
+		currentPath:      initialPath,
 		currentColor:     currentColor,
 		sshCommand:       "",
 		quitting:         false,
@@ -118,5 +164,6 @@ func initialModel(config Config) model {
 		inFavoritesView:  false,
 		historyData:      historyData,
 		favoritesData:    favoritesData,
+		startInGroup:     startInGroup,
 	}
 }

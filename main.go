@@ -21,6 +21,7 @@ func main() {
 	refreshCacheFlag := flag.Bool("refresh-cache", false, "Clear the cache and continue loading")
 	printVersion := flag.Bool("version", false, "Print version information")
 	help := flag.Bool("help", false, "Show help")
+	filterTopLevelGroupsFlag := flag.String("filter-top-level-groups", "", "Only load specified top-level groups (comma-separated)")
 	flag.Parse()
 
 	if *help {
@@ -76,6 +77,14 @@ func main() {
 		return
 	}
 
+	var filterTopLevelGroups []string
+	if *filterTopLevelGroupsFlag != "" {
+		filterTopLevelGroups = strings.Split(*filterTopLevelGroupsFlag, ",")
+		for i := range filterTopLevelGroups {
+			filterTopLevelGroups[i] = strings.TrimSpace(filterTopLevelGroups[i])
+		}
+	}
+
 	configPath := getConfigPath()
 	var config Config
 	var configErr error
@@ -83,6 +92,15 @@ func main() {
 	startSpinner("Loading configuration")
 	config, configErr = loadConfig(configPath)
 	stopSpinner()
+
+	if len(filterTopLevelGroups) > 0 {
+		filteredConfig, err := filterConfigByGroups(config, filterTopLevelGroups)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
+		}
+		config = filteredConfig
+	}
 
 	if configErr != nil && len(config.ImportErrors) > 0 {
 		uniqueErrors := dedupErrors(config.ImportErrors)
@@ -122,6 +140,7 @@ func printHelp() {
 	fmt.Println("  -refresh-cache     Clear the cache but continue loading the application")
 	fmt.Println("  -clear-history     Clear connection history")
 	fmt.Println("  -clear-favorites   Clear favorites")
+	fmt.Println("  -filter-top-level-groups  Only load specified top-level groups (comma-separated)")
 	fmt.Println("  -version           Print version information")
 	fmt.Println("  -help              Show this help message")
 	fmt.Println("\nEnvironment variables:")
@@ -179,4 +198,29 @@ func forceCleanCache() error {
 	}
 
 	return nil
+}
+
+func filterConfigByGroups(config Config, filterTopLevelGroups []string) (Config, error) {
+	var filteredGroups []*Group
+	var foundGroups []string
+
+	for _, groupName := range filterTopLevelGroups {
+		found := false
+		for _, group := range config.Groups {
+			if group.Name == groupName {
+				filteredGroups = append(filteredGroups, group)
+				foundGroups = append(foundGroups, groupName)
+				found = true
+				break
+			}
+		}
+		if !found {
+			return config, fmt.Errorf("top-level group '%s' not found", groupName)
+		}
+	}
+
+	filteredConfig := config
+	filteredConfig.Groups = filteredGroups
+
+	return filteredConfig, nil
 }

@@ -52,6 +52,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, nil
 			} else if len(m.currentPath) > 0 {
+				if m.startInGroup && len(m.currentPath) == 1 {
+					return m, tea.Quit
+				}
 				m.currentPath = m.currentPath[:len(m.currentPath)-1]
 				m.breadcrumbColors = m.breadcrumbColors[:len(m.breadcrumbColors)-1]
 				m.updateColorBasedOnCurrentPath()
@@ -193,9 +196,14 @@ func (m model) View() string {
 	} else {
 		breadcrumb := homeStyle.Render("🏠 Home")
 		if len(m.currentPath) > 0 {
-			for i, path := range m.currentPath {
+			startIndex := 0
+			if m.startInGroup {
+				startIndex = 1
+			}
+
+			for i := startIndex; i < len(m.currentPath); i++ {
 				separator := separatorStyle.Render(" > ")
-				if i == 0 {
+				if i == startIndex {
 					breadcrumb += separator
 				}
 
@@ -205,7 +213,7 @@ func (m model) View() string {
 				}
 
 				pathStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(pathColor))
-				breadcrumb += pathStyle.Render(path)
+				breadcrumb += pathStyle.Render(m.currentPath[i])
 
 				if i < len(m.currentPath)-1 {
 					breadcrumb += separator
@@ -231,8 +239,13 @@ func (m model) View() string {
 		} else if len(m.currentPath) > 0 {
 			currentGroup := findGroupByPathSlice(&m.config, m.currentPath)
 			if currentGroup != nil {
-				categoryColor = m.currentColor
-				categoryName = currentGroup.Name
+				if m.startInGroup && len(m.currentPath) == 1 {
+					categoryColor = "#FFFFFF"
+					categoryName = "Home"
+				} else {
+					categoryColor = m.currentColor
+					categoryName = currentGroup.Name
+				}
 			}
 		}
 

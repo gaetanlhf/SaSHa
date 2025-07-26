@@ -28,6 +28,7 @@ SaSHa (SSH Assistant) is a terminal-based SSH connection manager designed to sim
 - ✅ **Authentication for remote imports** with token and basic auth support
 - ✅ **Smart caching system** for remote imports with configurable timeout
 - ✅ **Keyboard shortcuts** for efficient navigation and operation
+- ✅ **Top-level group filtering** to limit display to specific groups
 
 ## Installation
 
@@ -242,12 +243,12 @@ groups:
   - name: Production
     # Only override what you need to change
     color: "#FF0000"  # Make production red for visibility
-    
+
     hosts:
       - name: Web Server
         host: web.prod.company.com
         # Only 'host' is required, everything else inherits or uses defaults
-        
+
       - name: Database
         host: db.prod.company.com
         user: db-admin      # Override only if different from global
@@ -257,7 +258,7 @@ groups:
       - name: Europe
         color: "#FF6600"    # Optional: different color for European servers
         user: eu-admin      # Optional: different user for European team
-        
+
         hosts:
           - name: EU Web Server
             host: web.eu.prod.company.com
@@ -500,16 +501,59 @@ SaSHa supports several command-line options:
 Usage: sasha [options]
 
 Options:
-  -clear-cache       Clear the import cache and exit
-  -refresh-cache     Clear the cache but continue loading the application
-  -clear-history     Clear connection history
-  -clear-favorites   Clear favorites
-  -version           Print version information
-  -help              Show this help message
+  -clear-cache                 Clear the import cache and exit
+  -refresh-cache               Clear the cache but continue loading the application
+  -clear-history               Clear connection history
+  -clear-favorites             Clear favorites
+  -filter-top-level-groups     Only load specified top-level groups (comma-separated)
+  -version                     Print version information
+  -help                        Show this help message
 
 Environment variables:
-  SASHA_HOME         Path to SaSHa home directory (default: ~/.sasha)
+  SASHA_HOME                   Path to SaSHa home directory (default: ~/.sasha)
 ```
+
+#### Top-Level Group Filtering
+
+The `--filter-top-level-groups` option allows you to limit SaSHa to only display specific top-level groups from your configuration. This is particularly useful for separating different contexts (e.g., work vs. personal servers) or when you only need to work with a subset of your infrastructure.
+
+```bash
+# Load only work-related servers
+sasha --filter-top-level-groups=Work
+
+# Load only personal servers
+sasha --filter-top-level-groups=Personal
+
+# Load multiple contexts
+sasha --filter-top-level-groups=Work,Personal
+
+# Load only client-specific servers
+sasha --filter-top-level-groups=ClientA
+```
+
+When using this option:
+- Only the specified top-level groups will be loaded
+- If only one group is specified, SaSHa will start directly inside that group (making it the new "Home")
+- History and favorites will be filtered to only show entries from the loaded groups
+
+**Example with configuration:**
+```yaml
+groups:
+  - name: Work
+    hosts:
+      - name: Company Server
+        host: server.company.com
+  - name: Personal
+    hosts:
+      - name: Home Server
+        host: homeserver.local
+  - name: ClientA
+    hosts:
+      - name: Client Server
+        host: client.example.com
+```
+
+Using `sasha --filter-top-level-groups=Work` will only show the Work group and its contents, effectively hiding Personal and ClientA groups for this session.
 
 ### Navigation
 

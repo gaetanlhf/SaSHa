@@ -102,10 +102,22 @@ func filterHistoryByExistingServers(historyData HistoryData, config *Config) His
 	var filteredEntries []HistoryEntry
 
 	allServers := getAllServersFromConfig(config)
+	validPaths := getAllValidPathsFromConfig(config)
 
 	for _, entry := range historyData.Entries {
 		if serverExistsInMap(entry.Server.Name, entry.Server.Host, allServers) {
-			filteredEntries = append(filteredEntries, entry)
+			pathValid := len(entry.Path) == 0
+			if len(entry.Path) > 0 {
+				for _, validPath := range validPaths {
+					if pathsEqual(entry.Path, validPath) {
+						pathValid = true
+						break
+					}
+				}
+			}
+			if pathValid {
+				filteredEntries = append(filteredEntries, entry)
+			}
 		}
 	}
 
@@ -125,6 +137,40 @@ func getAllServersFromConfig(config *Config) map[string]struct{} {
 	}
 
 	return serverMap
+}
+
+func getAllValidPathsFromConfig(config *Config) [][]string {
+	var paths [][]string
+
+	paths = append(paths, []string{})
+
+	for _, group := range config.Groups {
+		collectPathsFromGroup(group, []string{}, &paths)
+	}
+
+	return paths
+}
+
+func collectPathsFromGroup(group *Group, parentPath []string, paths *[][]string) {
+	currentPath := append([]string{}, parentPath...)
+	currentPath = append(currentPath, group.Name)
+	*paths = append(*paths, currentPath)
+
+	for _, subgroup := range group.Groups {
+		collectPathsFromGroup(subgroup, currentPath, paths)
+	}
+}
+
+func pathsEqual(path1, path2 []string) bool {
+	if len(path1) != len(path2) {
+		return false
+	}
+	for i := range path1 {
+		if path1[i] != path2[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func collectServersFromGroup(group *Group, serverMap map[string]struct{}) {
