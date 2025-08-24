@@ -90,9 +90,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.currentPath = m.currentPath[:len(m.currentPath)-1]
 				m.breadcrumbColors = m.breadcrumbColors[:len(m.breadcrumbColors)-1]
+
+				var previousSelection int
+				if len(m.selectionStack) > 0 {
+					previousSelection = m.selectionStack[len(m.selectionStack)-1]
+					m.selectionStack = m.selectionStack[:len(m.selectionStack)-1]
+				}
+
 				m.updateColorBasedOnCurrentPath()
 				m.updateListItems()
-				m.list.Select(0)
+
+				if previousSelection < len(m.list.Items()) {
+					m.list.Select(previousSelection)
+				} else {
+					m.list.Select(0)
+				}
+
 				if m.list.FilterState() != list.Unfiltered {
 					m.list.ResetFilter()
 				}
@@ -134,6 +147,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, tea.Quit
 					}
 				} else if i.isGroup {
+					currentSelection := m.list.Index()
+					m.selectionStack = append(m.selectionStack, currentSelection)
+
 					groupName := strings.TrimPrefix(i.title, "📁 ")
 					if i.path != "" {
 						parts := strings.Split(i.path, "/")

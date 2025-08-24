@@ -26,6 +26,7 @@ type model struct {
 	historyData      HistoryData
 	favoritesData    FavoritesData
 	startInGroup     bool
+	selectionStack   []int
 }
 
 func initialModel(config Config) model {
@@ -172,5 +173,6 @@ func initialModel(config Config) model {
 		historyData:      historyData,
 		favoritesData:    favoritesData,
 		startInGroup:     startInGroup,
+		selectionStack:   []int{},
 	}
 }
