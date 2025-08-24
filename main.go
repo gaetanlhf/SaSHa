@@ -6,7 +6,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 )
 
@@ -164,26 +163,7 @@ func handleApplicationExit(finalModel tea.Model) {
 }
 
 func forceCleanCache() error {
-	cacheDir, err := getCacheDir()
-	if err != nil {
-		return err
-	}
-
-	files, err := os.ReadDir(cacheDir)
-	if err != nil {
-		return err
-	}
-
-	for _, file := range files {
-		if !file.IsDir() {
-			filePath := filepath.Join(cacheDir, file.Name())
-			if err := os.Remove(filePath); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return cacheManager.CleanupCache()
 }
 
 func filterConfigByGroups(config Config, filterTopLevelGroups []string) (Config, error) {

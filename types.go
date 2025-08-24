@@ -1,12 +1,14 @@
 package main
 
+import "time"
+
 type Config struct {
 	Groups           []*Group          `yaml:"groups"`
 	Hosts            []*Server         `yaml:"hosts"`
 	Imports          []ImportDirective `yaml:"imports,omitempty"`
 	HistorySize      int               `yaml:"history_size,omitempty"`
 	FavoritesEnabled bool              `yaml:"favorites_enabled,omitempty"`
-	CacheTimeout     int               `yaml:"cache_timeout,omitempty"`
+	CacheSchedule    string            `yaml:"cache_schedule,omitempty"`
 	ImportErrors     []string          `yaml:"-"`
 	NoCache          bool              `yaml:"no_cache,omitempty"`
 	Auth             *AuthConfig       `yaml:"auth,omitempty"`
@@ -71,4 +73,14 @@ type AuthConfig struct {
 type ImportData struct {
 	Groups []*Group  `yaml:"groups,omitempty"`
 	Hosts  []*Server `yaml:"hosts,omitempty"`
+}
+
+type CachedImport struct {
+	Metadata CacheMetadata `yaml:"metadata"`
+	Data     ImportData    `yaml:"data"`
+}
+
+type CacheMetadata struct {
+	URL        string    `yaml:"url"`
+	LastUpdate time.Time `yaml:"last_update"`
 }

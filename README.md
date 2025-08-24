@@ -26,7 +26,7 @@ SaSHa (SSH Assistant) is a terminal-based SSH connection manager designed to sim
 - ✅ **Group-level configuration inheritance** propagating settings from groups to subgroups and servers
 - ✅ **Import functionality** to modularize your server configurations with remote URL support
 - ✅ **Authentication for remote imports** with token and basic auth support
-- ✅ **Smart caching system** for remote imports with configurable timeout
+- ✅ **Smart caching system** for remote imports with flexible cron-based scheduling
 - ✅ **Keyboard shortcuts** for efficient navigation and operation
 - ✅ **Top-level group filtering** to limit display to specific groups
 
@@ -100,6 +100,9 @@ history_size: 20
 # Enable or disable favorites feature
 favorites_enabled: true
 
+# Cache update schedule using cron format (optional, defaults to every 6 hours)
+cache_schedule: "0 8 * * *"  # Update cache daily at 8 AM
+
 # Define root-level groups
 groups:
   - name: Production
@@ -147,6 +150,7 @@ ssh_binary: ssh                # Default SSH binary
 extra_args: ["-o StrictHostKeyChecking=no"]  # Default SSH arguments
 auth:                          # Default auth for remote imports
   token: global_token
+cache_schedule: "0 8 * * *"    # Daily cache updates at 8 AM
 
 groups:
   - name: Production
@@ -180,6 +184,43 @@ At the root level of your configuration, you can optionally define global settin
 - `ssh_binary`: Default SSH binary to use for all servers (optional)
 - `auth`: Default authentication configuration for remote imports (optional)
 - `no_cache`: Disable caching for all remote imports (optional)
+- `cache_schedule`: Cron expression for cache update schedule (optional, defaults to "0 */6 * * *")
+
+#### Cache Schedule Configuration
+
+The `cache_schedule` setting uses cron format to control when cached remote imports should be refreshed. This provides flexible scheduling based on your needs:
+
+```yaml
+# Common cache schedule examples:
+
+# Every 6 hours (default if not specified)
+cache_schedule: "0 */6 * * *"
+
+# Daily at 8 AM
+cache_schedule: "0 8 * * *"
+
+# Daily at 9 PM
+cache_schedule: "0 21 * * *"
+
+# Twice daily (8 AM and 8 PM)
+cache_schedule: "0 8,20 * * *"
+
+# Weekly on Monday at 9 AM
+cache_schedule: "0 9 * * 1"
+
+# Every hour
+cache_schedule: "0 * * * *"
+
+# Every 30 minutes
+cache_schedule: "*/30 * * * *"
+```
+
+**Cron format:** `minute hour day-of-month month day-of-week`
+- minute: 0-59
+- hour: 0-23
+- day-of-month: 1-31
+- month: 1-12
+- day-of-week: 0-7 (0 and 7 are Sunday)
 
 #### Server Configuration Options
 
@@ -236,6 +277,7 @@ This hierarchical approach is especially powerful in enterprise environments, wh
 ```yaml
 # Optional global settings - only define what you want to standardize
 user: company-admin              # Optional: set if you want a default user
+cache_schedule: "0 8 * * *"      # Optional: daily cache updates at 8 AM
 auth:                           # Optional: set if you use authenticated remote imports
   token: company_access_token
 
@@ -285,6 +327,7 @@ For complex setups, you can split your configuration across multiple files and i
 ```yaml
 # Main config file - define only what you want to standardize globally
 user: company-admin     # Optional: only if you want a default user
+cache_schedule: "0 8 * * *"  # Optional: daily updates at 8 AM
 auth:                   # Optional: only if you use authenticated remote imports
   token: company_access_token
 
@@ -293,7 +336,7 @@ imports:
   - file: ~/.sasha/development-servers.yaml
     user: devuser  # Override global user for all imported dev servers
   - file: https://config.company.com/shared-servers.yaml
-    # Uses global auth automatically if defined
+    # Uses global auth and cache schedule automatically if defined
 
 groups:
   - name: Local
@@ -316,7 +359,7 @@ groups:
     hosts:
       - name: Web Server
         host: web.example.com
-        # Will inherit user, port, auth from main config
+        # Will inherit user, port, auth, cache schedule from main config
         # Will inherit color from Production group
 hosts:
   - name: Standalone Server
@@ -343,13 +386,14 @@ Using version control for your configuration files allows you to track infrastru
 SaSHa supports importing configurations from remote URLs, allowing teams to share server configurations from central repositories:
 
 ```yaml
-# Global auth used by all remote imports unless overridden
+# Global auth and cache schedule used by all remote imports unless overridden
+cache_schedule: "0 9 * * *"  # Daily updates at 9 AM
 auth:
   token: company_access_token
 
 imports:
   - file: https://config-server.example.com/team-servers.yaml
-    # Uses global auth automatically
+    # Uses global auth and cache schedule automatically
 
   - file: https://other-server.example.com/special-servers.yaml
     # Override auth for this specific import
@@ -361,12 +405,12 @@ imports:
       # header: Authorization  # Optional, defaults to "Authorization"
 ```
 
-Remote imports are cached locally to improve performance and allow offline use. You can control caching behavior at multiple levels:
+Remote imports are cached locally to improve performance and allow offline use. The cache is updated based on the cron schedule you configure:
 
 ```yaml
 # Global cache settings
-cache_timeout: 48  # Cache timeout in hours (default: 24)
-no_cache: false    # Global caching behavior
+cache_schedule: "0 */12 * * *"  # Update every 12 hours
+no_cache: false                 # Global caching behavior
 
 groups:
   - name: Dynamic Config
@@ -378,7 +422,7 @@ groups:
   - name: Stable Config
     imports:
       - file: https://config-server.example.com/stable-servers.yaml
-        # Uses global cache settings (48 hours)
+        # Uses global cache schedule (every 12 hours)
 
       - file: https://config-server.example.com/frequently-updated.yaml
         no_cache: true  # Override to disable cache for this specific import
@@ -390,6 +434,14 @@ You can manually manage the cache using:
 sasha --clear-cache      # Clear cache and exit
 sasha --refresh-cache    # Clear cache but continue loading
 ```
+
+**Cache Schedule Examples:**
+
+- `"0 8 * * *"` - Daily at 8 AM
+- `"0 */6 * * *"` - Every 6 hours (default)
+- `"0 9 * * 1"` - Weekly on Monday at 9 AM
+- `"*/30 * * * *"` - Every 30 minutes
+- `"0 8,20 * * *"` - Twice daily at 8 AM and 8 PM
 
 #### Authentication for Remote Imports
 
