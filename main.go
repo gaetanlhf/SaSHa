@@ -121,15 +121,15 @@ func printHelp() {
 	fmt.Printf("SaSHa SSH Manager version %s\n\n", version)
 	fmt.Println("Usage: sasha [options]")
 	fmt.Println("\nOptions:")
-	fmt.Println("  -clear-cache       Clear the import cache and exit")
-	fmt.Println("  -refresh-cache     Clear the cache but continue loading the application")
-	fmt.Println("  -clear-history     Clear connection history")
-	fmt.Println("  -clear-favorites   Clear favorites")
+	fmt.Println("  -clear-cache              Clear the import cache and exit")
+	fmt.Println("  -refresh-cache            Clear the cache but continue loading the application")
+	fmt.Println("  -clear-history            Clear connection history")
+	fmt.Println("  -clear-favorites          Clear favorites")
 	fmt.Println("  -filter-top-level-groups  Only load specified top-level groups (comma-separated)")
-	fmt.Println("  -version           Print version information")
-	fmt.Println("  -help              Show this help message")
+	fmt.Println("  -version                  Print version information")
+	fmt.Println("  -help                     Show this help message")
 	fmt.Println("\nEnvironment variables:")
-	fmt.Println("  SASHA_HOME         Path to SaSHa home directory (default: ~/.sasha)")
+	fmt.Println("  SASHA_HOME                Path to SaSHa home directory (default: ~/.sasha)")
 }
 
 func handleApplicationExit(finalModel tea.Model) {
