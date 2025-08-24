@@ -17,13 +17,13 @@ type keyMap struct {
 	Filter    key.Binding
 }
 
-func newKeyMap(historyEnabled bool, favoritesEnabled bool) keyMap {
+func newKeyMap(historyEnabled bool, favoritesEnabled bool, inErrorView bool) keyMap {
 	historyBinding := key.NewBinding(
 		key.WithKeys("h"),
 		key.WithHelp("h", "history"),
 	)
 
-	if !historyEnabled {
+	if !historyEnabled || inErrorView {
 		historyBinding.SetEnabled(false)
 	}
 
@@ -37,23 +37,57 @@ func newKeyMap(historyEnabled bool, favoritesEnabled bool) keyMap {
 		key.WithHelp("f", "toggle favorite"),
 	)
 
-	if !favoritesEnabled {
+	if !favoritesEnabled || inErrorView {
 		favoritesBinding.SetEnabled(false)
 		favoriteBinding.SetEnabled(false)
 	}
 
+	helpBinding := key.NewBinding(
+		key.WithKeys("?"),
+		key.WithHelp("?", "help"),
+	)
+
+	filterBinding := key.NewBinding(
+		key.WithKeys("/"),
+		key.WithHelp("/", "filter"),
+	)
+
+	if inErrorView {
+		helpBinding.SetEnabled(false)
+		filterBinding.SetEnabled(false)
+	}
+
+	upBinding := key.NewBinding(
+		key.WithKeys("up", "k"),
+		key.WithHelp("↑/k", "up"),
+	)
+
+	downBinding := key.NewBinding(
+		key.WithKeys("down", "j"),
+		key.WithHelp("↓/j", "down"),
+	)
+
+	if inErrorView {
+		upBinding.SetEnabled(false)
+		downBinding.SetEnabled(false)
+	}
+
+	backHelp := "back"
+	if inErrorView {
+		backHelp = "exit"
+	}
+
+	enterHelp := "select"
+	if inErrorView {
+		enterHelp = "continue"
+	}
+
 	return keyMap{
-		Up: key.NewBinding(
-			key.WithKeys("up", "k"),
-			key.WithHelp("↑/k", "up"),
-		),
-		Down: key.NewBinding(
-			key.WithKeys("down", "j"),
-			key.WithHelp("↓/j", "down"),
-		),
+		Up:   upBinding,
+		Down: downBinding,
 		Enter: key.NewBinding(
 			key.WithKeys("enter"),
-			key.WithHelp("enter", "select"),
+			key.WithHelp("enter", enterHelp),
 		),
 		Quit: key.NewBinding(
 			key.WithKeys("q", "ctrl+c"),
@@ -61,16 +95,10 @@ func newKeyMap(historyEnabled bool, favoritesEnabled bool) keyMap {
 		),
 		Back: key.NewBinding(
 			key.WithKeys("esc", "backspace"),
-			key.WithHelp("esc", "back"),
+			key.WithHelp("esc", backHelp),
 		),
-		Help: key.NewBinding(
-			key.WithKeys("?"),
-			key.WithHelp("?", "help"),
-		),
-		Filter: key.NewBinding(
-			key.WithKeys("/"),
-			key.WithHelp("/", "filter"),
-		),
+		Help:      helpBinding,
+		Filter:    filterBinding,
 		History:   historyBinding,
 		Favorites: favoritesBinding,
 		Favorite:  favoriteBinding,
@@ -78,10 +106,19 @@ func newKeyMap(historyEnabled bool, favoritesEnabled bool) keyMap {
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Help}
+	if k.Help.Enabled() {
+		return []key.Binding{k.Help}
+	}
+	return []key.Binding{k.Enter, k.Back}
 }
 
 func (k keyMap) FullHelp() [][]key.Binding {
+	if !k.Help.Enabled() {
+		return [][]key.Binding{
+			{k.Enter, k.Back, k.Quit},
+		}
+	}
+
 	if !k.History.Enabled() && !k.Favorites.Enabled() {
 		return [][]key.Binding{
 			{k.Up, k.Down, k.Enter, k.Back},

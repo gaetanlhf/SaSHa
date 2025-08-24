@@ -19,6 +19,39 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if m.inErrorView {
+			switch {
+			case key.Matches(msg, m.keys.Quit):
+				return m, tea.Quit
+			case key.Matches(msg, m.keys.Back):
+				return m, tea.Quit
+			case key.Matches(msg, m.keys.Enter):
+				m.inErrorView = false
+				m.keys = newKeyMap(m.config.HistorySize > 0, m.config.FavoritesEnabled, false)
+				delegate := NewColoredDelegate()
+				delegate.currentColor = "#FFFFFF"
+				m.list.SetDelegate(delegate)
+				m.updateColorBasedOnCurrentPath()
+				m.updateListItems()
+				m.list.Select(0)
+				if m.startInGroup && len(m.config.Groups) == 1 && len(m.config.Hosts) == 0 {
+					singleGroup := m.config.Groups[0]
+					m.currentPath = []string{singleGroup.Name}
+					if singleGroup.Color != "" {
+						m.currentColor = singleGroup.Color
+						initStyles(m.currentColor)
+						delegate.currentColor = m.currentColor
+						m.list.SetDelegate(delegate)
+					}
+					m.breadcrumbColors = []string{m.currentColor}
+					m.updateColorBasedOnCurrentPath()
+					m.updateListItems()
+				}
+				return m, nil
+			}
+			return m, nil
+		}
+
 		if m.list.FilterState() == list.Filtering {
 			m.list, cmd = m.list.Update(msg)
 			return m, cmd
@@ -148,7 +181,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.adjustListHeight()
 	}
 
-	m.list, cmd = m.list.Update(msg)
+	if !m.inErrorView {
+		m.list, cmd = m.list.Update(msg)
+	}
 	return m, cmd
 }
 
@@ -160,9 +195,13 @@ func (m *model) adjustListHeight() {
 	top, right, bottom, left := 2, 2, 1, 2
 	helpHeight := 1
 
-	if m.help.ShowAll {
+	if m.help.ShowAll && !m.inErrorView {
 		helpText := m.help.View(m.keys)
 		helpHeight = strings.Count(helpText, "\n") + 1
+	}
+
+	if m.inErrorView {
+		helpHeight = 1
 	}
 
 	m.list.SetSize(
@@ -181,12 +220,21 @@ func (m model) View() string {
 	homeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
 	historyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(historyColor))
 	favoritesStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(favoritesColor))
+	errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FF6B6B"))
 	separatorStyle := helpStyle
 
 	maxBreadcrumbWidth := m.width - 4
 
-	if m.inHistoryView {
-		breadcrumb := historyStyle.Render("🕒 History")
+	if m.inErrorView {
+		errorTitle := "🚨 Error"
+		if len(m.config.ImportErrors) > 1 {
+			errorTitle = "🚨 Errors"
+		}
+		breadcrumb := errorStyle.Render(errorTitle)
+		breadcrumb = truncateBreadcrumb(breadcrumb, maxBreadcrumbWidth)
+		content.WriteString(breadcrumb + "\n\n")
+	} else if m.inHistoryView {
+		breadcrumb := historyStyle.Render("🕘 History")
 		breadcrumb = truncateBreadcrumb(breadcrumb, maxBreadcrumbWidth)
 		content.WriteString(breadcrumb + "\n\n")
 	} else if m.inFavoritesView {
@@ -226,7 +274,7 @@ func (m model) View() string {
 
 	isFiltering := m.list.FilterState() == list.Filtering
 
-	if !isFiltering {
+	if !isFiltering && !m.inErrorView {
 		categoryColor := "#FFFFFF"
 		categoryName := "Home"
 
@@ -260,6 +308,23 @@ func (m model) View() string {
 
 		categoryLabel := categoryStyle.Render(categoryName)
 		content.WriteString(categoryLabel + "\n")
+	} else if m.inErrorView {
+		categoryName := "Error"
+		if len(m.config.ImportErrors) > 1 {
+			categoryName = "Errors"
+		}
+
+		textColor := getContrastColor("#FF6B6B")
+
+		categoryStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color(textColor)).
+			Background(lipgloss.Color("#FF6B6B")).
+			Bold(true).
+			Padding(0, 1).
+			MarginLeft(2)
+
+		categoryLabel := categoryStyle.Render(categoryName)
+		content.WriteString(categoryLabel + "\n")
 	}
 
 	content.WriteString(m.list.View())
@@ -277,7 +342,7 @@ func (m model) View() string {
 	versionStr := fmt.Sprintf("SaSHa %s", versionDisplay)
 	versionStyle := helpStyle
 
-	if m.help.ShowAll {
+	if m.help.ShowAll && !m.inErrorView {
 		lines := strings.Split(helpView, "\n")
 		if len(lines) > 0 {
 			lastLine := lines[len(lines)-1]

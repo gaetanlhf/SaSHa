@@ -93,6 +93,11 @@ func main() {
 	config, configErr = loadConfig(configPath)
 	stopSpinner()
 
+	if configErr != nil && len(config.ImportErrors) == 0 {
+		fmt.Printf("Error: %v\n", configErr)
+		os.Exit(1)
+	}
+
 	if len(filterTopLevelGroups) > 0 {
 		filteredConfig, err := filterConfigByGroups(config, filterTopLevelGroups)
 		if err != nil {
@@ -100,25 +105,6 @@ func main() {
 			os.Exit(1)
 		}
 		config = filteredConfig
-	}
-
-	if configErr != nil && len(config.ImportErrors) > 0 {
-		uniqueErrors := dedupErrors(config.ImportErrors)
-
-		if len(uniqueErrors) > 0 {
-			fmt.Println("Import Errors:")
-			for i, err := range uniqueErrors {
-				fmt.Printf("  %d. %s\n", i+1, err)
-			}
-
-			fmt.Print("\nSome imports failed. Continue anyway? (y/n) ")
-			var answer string
-			fmt.Scanln(&answer)
-
-			if answer != "y" && answer != "Y" {
-				os.Exit(1)
-			}
-		}
 	}
 
 	p := tea.NewProgram(initialModel(config), tea.WithAltScreen())

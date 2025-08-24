@@ -574,72 +574,38 @@ func saveToCache(url string, data []byte, auth *AuthConfig) error {
 	return os.WriteFile(metaFile, metaData, 0644)
 }
 
-func getCachedFile(url string, auth *AuthConfig) ([]byte, error) {
+func getCachedFile(url string, auth *AuthConfig) ([]byte, bool, error) {
 	metaFile, dataFile, err := getCacheFilePath(url, auth)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	metaData, err := os.ReadFile(metaFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, nil
+			return nil, false, nil
 		}
-		return nil, err
+		return nil, false, err
 	}
 
 	var cache ImportCache
 	if err := yaml.Unmarshal(metaData, &cache); err != nil {
-		return nil, err
-	}
-
-	if time.Now().After(cache.ExpiresAt) {
-		return nil, nil
+		return nil, false, err
 	}
 
 	data, err := os.ReadFile(dataFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, nil
+			return nil, false, nil
 		}
-		return nil, err
+		return nil, false, err
 	}
 
-	return data, nil
+	isExpired := time.Now().After(cache.ExpiresAt)
+	return data, isExpired, nil
 }
 
 func cleanupCache() error {
-	cacheDir, err := getCacheDir()
-	if err != nil {
-		return err
-	}
-
-	files, err := os.ReadDir(cacheDir)
-	if err != nil {
-		return err
-	}
-
-	for _, file := range files {
-		if !file.IsDir() && strings.HasSuffix(file.Name(), ".meta") {
-			metaPath := filepath.Join(cacheDir, file.Name())
-
-			metaData, err := os.ReadFile(metaPath)
-			if err != nil {
-				continue
-			}
-
-			var cache ImportCache
-			if err := yaml.Unmarshal(metaData, &cache); err != nil {
-				continue
-			}
-
-			if time.Now().After(cache.ExpiresAt) {
-				os.Remove(metaPath)
-				os.Remove(cache.Path)
-			}
-		}
-	}
-
 	return nil
 }
 
@@ -647,11 +613,11 @@ func isURL(path string) bool {
 	return strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://")
 }
 
-func readRemoteFile(urlStr string, noCache bool, auth *AuthConfig) ([]byte, error) {
+func readRemoteFile(urlStr string, noCache bool, auth *AuthConfig) ([]byte, bool, error) {
 	if !noCache {
-		cachedData, err := getCachedFile(urlStr, auth)
-		if err == nil && cachedData != nil {
-			return cachedData, nil
+		cachedData, isExpired, err := getCachedFile(urlStr, auth)
+		if err == nil && cachedData != nil && !isExpired {
+			return cachedData, false, nil
 		}
 	}
 
@@ -661,7 +627,13 @@ func readRemoteFile(urlStr string, noCache bool, auth *AuthConfig) ([]byte, erro
 
 	req, err := http.NewRequest("GET", urlStr, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request for %s: %w", urlStr, err)
+		if !noCache {
+			cachedData, _, cacheErr := getCachedFile(urlStr, auth)
+			if cacheErr == nil && cachedData != nil {
+				return cachedData, true, formatHTTPError(urlStr, err)
+			}
+		}
+		return nil, false, formatHTTPError(urlStr, err)
 	}
 
 	req.Header.Set("User-Agent", "SaSHa-SSH-Manager")
@@ -681,68 +653,70 @@ func readRemoteFile(urlStr string, noCache bool, auth *AuthConfig) ([]byte, erro
 	resp, err := client.Do(req)
 	if err != nil {
 		if !noCache {
-			cachedData, _ := getCachedFile(urlStr, auth)
-			if cachedData != nil {
-				return cachedData, nil
+			cachedData, _, cacheErr := getCachedFile(urlStr, auth)
+			if cacheErr == nil && cachedData != nil {
+				return cachedData, true, formatHTTPError(urlStr, err)
 			}
 		}
-		return nil, formatHTTPError(urlStr, err)
+		return nil, false, formatHTTPError(urlStr, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		if !noCache {
-			cachedData, _ := getCachedFile(urlStr, auth)
-			if cachedData != nil {
-				return cachedData, nil
+			cachedData, _, cacheErr := getCachedFile(urlStr, auth)
+			if cacheErr == nil && cachedData != nil {
+				return cachedData, true, fmt.Errorf("HTTP error: %s for %s", resp.Status, urlStr)
 			}
 		}
-		return nil, fmt.Errorf("HTTP error: %s for %s", resp.Status, urlStr)
+		return nil, false, fmt.Errorf("HTTP error: %s for %s", resp.Status, urlStr)
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		if !noCache {
-			cachedData, _ := getCachedFile(urlStr, auth)
-			if cachedData != nil {
-				return cachedData, nil
+			cachedData, _, cacheErr := getCachedFile(urlStr, auth)
+			if cacheErr == nil && cachedData != nil {
+				return cachedData, true, fmt.Errorf("failed to read response body from %s: %w", urlStr, err)
 			}
 		}
-		return nil, fmt.Errorf("failed to read response body from %s: %w", urlStr, err)
+		return nil, false, fmt.Errorf("failed to read response body from %s: %w", urlStr, err)
 	}
 
 	var importData ImportData
 	if err := yaml.Unmarshal(data, &importData); err != nil {
 		if !noCache {
-			cachedData, _ := getCachedFile(urlStr, auth)
-			if cachedData != nil {
-				return cachedData, nil
+			cachedData, _, cacheErr := getCachedFile(urlStr, auth)
+			if cacheErr == nil && cachedData != nil {
+				return cachedData, true, fmt.Errorf("failed to parse imported data from %s: %w", urlStr, err)
 			}
 		}
-		return data, fmt.Errorf("failed to parse imported data from %s: %w", urlStr, err)
+		return nil, false, fmt.Errorf("failed to parse imported data from %s: %w", urlStr, err)
 	}
 
 	if !noCache {
 		saveToCache(urlStr, data, auth)
 	}
 
-	return data, nil
+	return data, false, nil
 }
 
 func formatHTTPError(urlStr string, err error) error {
+	errStr := err.Error()
+
 	switch {
-	case strings.Contains(err.Error(), "no such host"):
-		return fmt.Errorf("host not found for %s: %w", urlStr, err)
-	case strings.Contains(err.Error(), "timeout"):
-		return fmt.Errorf("connection timed out for %s: %w", urlStr, err)
-	case strings.Contains(err.Error(), "connection refused"):
-		return fmt.Errorf("connection refused for %s: %w", urlStr, err)
-	case strings.Contains(err.Error(), "no route to host"):
-		return fmt.Errorf("no route to host for %s: %w", urlStr, err)
-	case strings.Contains(err.Error(), "certificate"):
-		return fmt.Errorf("SSL/TLS certificate error for %s: %w", urlStr, err)
+	case strings.Contains(errStr, "no such host"):
+		return fmt.Errorf("🌐 Host not found: %s", urlStr)
+	case strings.Contains(errStr, "timeout"):
+		return fmt.Errorf("⏱️ Connection timeout: %s", urlStr)
+	case strings.Contains(errStr, "connection refused"):
+		return fmt.Errorf("🚫 Connection refused: %s", urlStr)
+	case strings.Contains(errStr, "no route to host"):
+		return fmt.Errorf("🛣️ No route to host: %s", urlStr)
+	case strings.Contains(errStr, "certificate"):
+		return fmt.Errorf("🔒 SSL/TLS certificate error: %s", urlStr)
 	default:
-		return fmt.Errorf("error fetching %s: %w", urlStr, err)
+		return fmt.Errorf("🌍 Network error for %s: %v", urlStr, err)
 	}
 }
 
@@ -782,24 +756,16 @@ func resolveImportPath(importPath, basePath string) string {
 }
 
 func ProcessImports(config *Config, configPath string) error {
-	updateSpinnerMessage("Cleaning up cache")
-	err := cleanupCache()
-	if err != nil {
-		// Continue even if cleanup fails
-	}
-
 	importDirectives := collectImportDirectives(config)
 
 	config.ImportErrors = []string{}
-	var lastError error
 
 	if len(importDirectives) > 0 {
 		updateSpinnerMessage("Processing imports")
 		for _, directive := range importDirectives {
 			err := processImport(directive, config, configPath)
-			if err != nil {
+			if err != nil && !strings.Contains(err.Error(), "[EXPIRED_CACHE]") {
 				config.ImportErrors = append(config.ImportErrors, err.Error())
-				lastError = err
 			}
 		}
 	}
@@ -807,7 +773,10 @@ func ProcessImports(config *Config, configPath string) error {
 	updateSpinnerMessage("Applying inherited settings")
 	propagateInheritedSettings(config)
 
-	return lastError
+	if len(config.ImportErrors) > 0 {
+		return fmt.Errorf("import errors occurred")
+	}
+	return nil
 }
 
 func processImport(directive ImportDirective, config *Config, basePath string) error {
@@ -816,6 +785,7 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 
 	var data []byte
 	var err error
+	var usingExpiredCache bool
 
 	if directive.Auth == nil && directive.Path != "" {
 		targetGroup := findGroupByPath(config, directive.Path)
@@ -835,14 +805,23 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 	}
 
 	if isURL(resolvedPath) {
-		data, err = readRemoteFile(resolvedPath, directive.NoCache, directive.Auth)
+		data, usingExpiredCache, err = readRemoteFile(resolvedPath, directive.NoCache, directive.Auth)
 	} else {
 		data, err = os.ReadFile(resolvedPath)
 	}
 
-	if err != nil || data == nil || len(data) == 0 {
-		errMsg := fmt.Sprintf("Failed to read import file %s: %v", filePath, err)
+	if data == nil || len(data) == 0 {
+		if err != nil {
+			errMsg := fmt.Sprintf("Failed to read import file %s: %v", filePath, err)
+			return fmt.Errorf(errMsg)
+		}
+		errMsg := fmt.Sprintf("Failed to read import file %s: empty file", filePath)
 		return fmt.Errorf(errMsg)
+	}
+
+	if usingExpiredCache && err != nil {
+		errorMsg := fmt.Sprintf("%v [EXPIRED_CACHE]", err.Error())
+		config.ImportErrors = append(config.ImportErrors, errorMsg)
 	}
 
 	var importData ImportData

@@ -22,6 +22,7 @@ type model struct {
 	height           int
 	inHistoryView    bool
 	inFavoritesView  bool
+	inErrorView      bool
 	historyData      HistoryData
 	favoritesData    FavoritesData
 	startInGroup     bool
@@ -59,8 +60,13 @@ func initialModel(config Config) model {
 	startInGroup := len(config.Groups) == 1 && len(config.Hosts) == 0
 	var initialPath []string
 	var items []list.Item
+	inErrorView := len(config.ImportErrors) > 0
 
-	if startInGroup {
+	if inErrorView {
+		items = buildErrorItems(config.ImportErrors)
+		errorDelegate := newErrorDelegate()
+		l.SetDelegate(errorDelegate)
+	} else if startInGroup {
 		singleGroup := config.Groups[0]
 		initialPath = []string{singleGroup.Name}
 
@@ -139,10 +145,10 @@ func initialModel(config Config) model {
 		favoritesData, _ = loadFavorites()
 	}
 
-	keys := newKeyMap(historyEnabled, config.FavoritesEnabled)
+	keys := newKeyMap(historyEnabled, config.FavoritesEnabled, inErrorView)
 
 	var breadcrumbColors []string
-	if startInGroup {
+	if startInGroup && !inErrorView {
 		breadcrumbColors = []string{currentColor}
 	}
 
@@ -162,6 +168,7 @@ func initialModel(config Config) model {
 		height:           0,
 		inHistoryView:    false,
 		inFavoritesView:  false,
+		inErrorView:      inErrorView,
 		historyData:      historyData,
 		favoritesData:    favoritesData,
 		startInGroup:     startInGroup,

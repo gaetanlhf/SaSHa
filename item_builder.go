@@ -21,6 +21,7 @@ type item struct {
 	isMultiline    bool
 	pathEntries    []string
 	pathColors     []string
+	isError        bool
 }
 
 func (i item) Title() string       { return i.title }
@@ -72,6 +73,26 @@ func buildGroupItems(groups []*Group, pathPrefix []string, defaultColor string) 
 			isHistory:   false,
 			isFavorite:  false,
 			isMultiline: false,
+		})
+	}
+
+	return items
+}
+
+func buildErrorItems(errors []string) []list.Item {
+	var items []list.Item
+
+	for _, err := range errors {
+		errorInfo := classifyError(err)
+
+		items = append(items, item{
+			title:       fmt.Sprintf("%s %s", errorInfo.Emoji, errorInfo.Message),
+			description: "",
+			isGroup:     false,
+			path:        "",
+			color:       errorInfo.Color,
+			isMultiline: false,
+			isError:     true,
 		})
 	}
 
