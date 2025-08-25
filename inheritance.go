@@ -3,6 +3,7 @@ package main
 type inheritedSettings struct {
 	User      *string
 	Port      *int
+	Password  *string
 	ExtraArgs []string
 	SSHBinary *string
 	Color     *string
@@ -14,6 +15,7 @@ func getInheritedGroupSettings(group *Group) inheritedSettings {
 	inherited := inheritedSettings{
 		User:      group.User,
 		Port:      group.Port,
+		Password:  group.Password,
 		SSHBinary: group.SSHBinary,
 		Color:     group.Color,
 		NoCache:   group.NoCache,
@@ -52,6 +54,7 @@ func propagateInheritedSettings(config *Config) {
 		propagateGroupSettings(group, inheritedSettings{
 			User:      config.User,
 			Port:      config.Port,
+			Password:  config.Password,
 			SSHBinary: config.SSHBinary,
 			Color:     config.Color,
 			ExtraArgs: config.ExtraArgs,
@@ -100,6 +103,7 @@ func propagateGroupSettings(group *Group, parentSettings inheritedSettings) {
 	settings := inheritedSettings{
 		User:      parentSettings.User,
 		Port:      parentSettings.Port,
+		Password:  parentSettings.Password,
 		SSHBinary: parentSettings.SSHBinary,
 		Color:     parentSettings.Color,
 		NoCache:   parentSettings.NoCache,
@@ -115,6 +119,9 @@ func propagateGroupSettings(group *Group, parentSettings inheritedSettings) {
 	}
 	if group.Port != nil {
 		settings.Port = group.Port
+	}
+	if group.Password != nil {
+		settings.Password = group.Password
 	}
 	if group.SSHBinary != nil {
 		settings.SSHBinary = group.SSHBinary
@@ -150,6 +157,9 @@ func propagateGroupSettings(group *Group, parentSettings inheritedSettings) {
 		}
 		if host.Port == nil && settings.Port != nil {
 			host.Port = settings.Port
+		}
+		if host.Password == nil && settings.Password != nil {
+			host.Password = settings.Password
 		}
 		if host.SSHBinary == nil && settings.SSHBinary != nil {
 			host.SSHBinary = settings.SSHBinary

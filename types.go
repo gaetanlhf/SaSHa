@@ -1,66 +1,74 @@
 package main
 
-import "time"
+import (
+	"time"
+)
 
 type Config struct {
-	Groups           []*Group          `yaml:"groups"`
-	Hosts            []*Server         `yaml:"hosts"`
-	Imports          []ImportDirective `yaml:"imports,omitempty"`
-	HistorySize      int               `yaml:"history_size,omitempty"`
-	FavoritesEnabled bool              `yaml:"favorites_enabled,omitempty"`
-	CacheSchedule    string            `yaml:"cache_schedule,omitempty"`
-	ImportErrors     []string          `yaml:"-"`
-	NoCache          bool              `yaml:"no_cache,omitempty"`
-	Auth             *AuthConfig       `yaml:"auth,omitempty"`
-	Color            *string           `yaml:"color,omitempty"`
 	User             *string           `yaml:"user,omitempty"`
 	Port             *int              `yaml:"port,omitempty"`
-	ExtraArgs        []string          `yaml:"extra_args,omitempty"`
+	Password         *string           `yaml:"password,omitempty"`
 	SSHBinary        *string           `yaml:"ssh_binary,omitempty"`
-}
-
-type Group struct {
-	Name      string            `yaml:"name"`
-	Hosts     []*Server         `yaml:"hosts"`
-	Groups    []*Group          `yaml:"groups,omitempty"`
-	User      *string           `yaml:"user,omitempty"`
-	Port      *int              `yaml:"port,omitempty"`
-	ExtraArgs []string          `yaml:"extra_args,omitempty"`
-	SSHBinary *string           `yaml:"ssh_binary,omitempty"`
-	Color     *string           `yaml:"color,omitempty"`
-	Imports   []ImportDirective `yaml:"imports,omitempty"`
-	NoCache   bool              `yaml:"no_cache,omitempty"`
-	Auth      *AuthConfig       `yaml:"auth,omitempty"`
+	Color            *string           `yaml:"color,omitempty"`
+	ExtraArgs        []string          `yaml:"extra_args,omitempty"`
+	NoCache          bool              `yaml:"no_cache,omitempty"`
+	CacheSchedule    string            `yaml:"cache_schedule,omitempty"`
+	HistorySize      int               `yaml:"history_size,omitempty"`
+	FavoritesEnabled bool              `yaml:"favorites_enabled,omitempty"`
+	Groups           []*Group          `yaml:"groups,omitempty"`
+	Hosts            []*Server         `yaml:"hosts,omitempty"`
+	Imports          []ImportDirective `yaml:"imports,omitempty"`
+	ImportErrors     []string          `yaml:"-"`
+	Auth             *AuthConfig       `yaml:"auth,omitempty"`
 }
 
 type Server struct {
 	Name      string   `yaml:"name"`
 	Host      string   `yaml:"host"`
-	Port      *int     `yaml:"port,omitempty"`
 	User      *string  `yaml:"user,omitempty"`
-	ExtraArgs []string `yaml:"extra_args,omitempty"`
-	Group     string   `yaml:"group,omitempty"`
+	Port      *int     `yaml:"port,omitempty"`
+	Password  *string  `yaml:"password,omitempty"`
 	SSHBinary *string  `yaml:"ssh_binary,omitempty"`
 	Color     *string  `yaml:"color,omitempty"`
+	ExtraArgs []string `yaml:"extra_args,omitempty"`
+	Group     string   `yaml:"group,omitempty"`
 }
 
-type ImportConfig struct {
-	Imports []ImportDirective `yaml:"imports"`
-	NoCache bool              `yaml:"no_cache,omitempty"`
-	Auth    *AuthConfig       `yaml:"auth,omitempty"`
+type Group struct {
+	Name      string            `yaml:"name"`
+	User      *string           `yaml:"user,omitempty"`
+	Port      *int              `yaml:"port,omitempty"`
+	Password  *string           `yaml:"password,omitempty"`
+	SSHBinary *string           `yaml:"ssh_binary,omitempty"`
+	Color     *string           `yaml:"color,omitempty"`
+	ExtraArgs []string          `yaml:"extra_args,omitempty"`
+	NoCache   bool              `yaml:"no_cache,omitempty"`
+	Groups    []*Group          `yaml:"groups,omitempty"`
+	Hosts     []*Server         `yaml:"hosts,omitempty"`
+	Imports   []ImportDirective `yaml:"imports,omitempty"`
+	Auth      *AuthConfig       `yaml:"auth,omitempty"`
 }
 
 type ImportDirective struct {
 	File      string      `yaml:"file"`
 	Path      string      `yaml:"path,omitempty"`
-	Group     string      `yaml:"group,omitempty"`
 	User      *string     `yaml:"user,omitempty"`
 	Port      *int        `yaml:"port,omitempty"`
-	ExtraArgs []string    `yaml:"extra_args,omitempty"`
+	Password  *string     `yaml:"password,omitempty"`
 	SSHBinary *string     `yaml:"ssh_binary,omitempty"`
 	Color     *string     `yaml:"color,omitempty"`
+	ExtraArgs []string    `yaml:"extra_args,omitempty"`
 	NoCache   bool        `yaml:"no_cache,omitempty"`
 	Auth      *AuthConfig `yaml:"auth,omitempty"`
+}
+
+type ImportData struct {
+	Groups []*Group  `yaml:"groups,omitempty"`
+	Hosts  []*Server `yaml:"hosts,omitempty"`
+}
+
+type ImportConfig struct {
+	Imports []ImportDirective `yaml:"imports,omitempty"`
 }
 
 type AuthConfig struct {
@@ -70,17 +78,12 @@ type AuthConfig struct {
 	Header   string `yaml:"header,omitempty"`
 }
 
-type ImportData struct {
-	Groups []*Group  `yaml:"groups,omitempty"`
-	Hosts  []*Server `yaml:"hosts,omitempty"`
+type CacheMetadata struct {
+	URL        string    `yaml:"url"`
+	LastUpdate time.Time `yaml:"last_update"`
 }
 
 type CachedImport struct {
 	Metadata CacheMetadata `yaml:"metadata"`
 	Data     ImportData    `yaml:"data"`
-}
-
-type CacheMetadata struct {
-	URL        string    `yaml:"url"`
-	LastUpdate time.Time `yaml:"last_update"`
 }

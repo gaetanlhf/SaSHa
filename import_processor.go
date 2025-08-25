@@ -88,6 +88,9 @@ func applyGlobalSettingsToDirective(config *Config, directive *ImportDirective) 
 	if directive.Port == nil && config.Port != nil {
 		directive.Port = config.Port
 	}
+	if directive.Password == nil && config.Password != nil {
+		directive.Password = config.Password
+	}
 	if directive.SSHBinary == nil && config.SSHBinary != nil {
 		directive.SSHBinary = config.SSHBinary
 	}
@@ -111,6 +114,9 @@ func applyGlobalSettingsToGroup(config *Config, group *Group) {
 	}
 	if group.Port == nil && config.Port != nil {
 		group.Port = config.Port
+	}
+	if group.Password == nil && config.Password != nil {
+		group.Password = config.Password
 	}
 	if group.SSHBinary == nil && config.SSHBinary != nil {
 		group.SSHBinary = config.SSHBinary
@@ -144,6 +150,9 @@ func applyGlobalSettingsToServer(config *Config, server *Server) {
 	if server.Port == nil && config.Port != nil {
 		server.Port = config.Port
 	}
+	if server.Password == nil && config.Password != nil {
+		server.Password = config.Password
+	}
 	if server.SSHBinary == nil && config.SSHBinary != nil {
 		server.SSHBinary = config.SSHBinary
 	}
@@ -176,27 +185,24 @@ func collectImportDirectivesFromGroup(group *Group, path string) []ImportDirecti
 		if imports[i].User == nil && group.User != nil {
 			imports[i].User = group.User
 		}
-
 		if imports[i].Port == nil && group.Port != nil {
 			imports[i].Port = group.Port
 		}
-
+		if imports[i].Password == nil && group.Password != nil {
+			imports[i].Password = group.Password
+		}
 		if imports[i].SSHBinary == nil && group.SSHBinary != nil {
 			imports[i].SSHBinary = group.SSHBinary
 		}
-
 		if imports[i].Color == nil && group.Color != nil {
 			imports[i].Color = group.Color
 		}
-
 		if len(imports[i].ExtraArgs) == 0 && len(group.ExtraArgs) > 0 {
 			imports[i].ExtraArgs = append([]string{}, group.ExtraArgs...)
 		}
-
 		if group.NoCache {
 			imports[i].NoCache = true
 		}
-
 		if imports[i].Auth == nil && groupAuth != nil {
 			imports[i].Auth = groupAuth
 		}
@@ -293,6 +299,7 @@ func getGroupInheritedSettings(config *Config, path string) inheritedSettings {
 
 	settings.User = currentGroup.User
 	settings.Port = currentGroup.Port
+	settings.Password = currentGroup.Password
 	settings.SSHBinary = currentGroup.SSHBinary
 	settings.Color = currentGroup.Color
 	settings.NoCache = currentGroup.NoCache
@@ -324,6 +331,9 @@ func getGroupInheritedSettings(config *Config, path string) inheritedSettings {
 				}
 				if currentGroup.Port != nil {
 					settings.Port = currentGroup.Port
+				}
+				if currentGroup.Password != nil {
+					settings.Password = currentGroup.Password
 				}
 				if currentGroup.SSHBinary != nil {
 					settings.SSHBinary = currentGroup.SSHBinary
@@ -363,6 +373,7 @@ func getGroupInheritedSettings(config *Config, path string) inheritedSettings {
 func applyDirectiveSettingsWithInheritance(importData *ImportData, directive ImportDirective, inherited inheritedSettings) {
 	effectiveUser := inherited.User
 	effectivePort := inherited.Port
+	effectivePassword := inherited.Password
 	effectiveSSHBinary := inherited.SSHBinary
 	effectiveColor := inherited.Color
 	effectiveNoCache := inherited.NoCache || directive.NoCache
@@ -374,6 +385,9 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 	}
 	if directive.Port != nil {
 		effectivePort = directive.Port
+	}
+	if directive.Password != nil {
+		effectivePassword = directive.Password
 	}
 	if directive.SSHBinary != nil {
 		effectiveSSHBinary = directive.SSHBinary
@@ -394,6 +408,9 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 		}
 		if group.Port == nil && effectivePort != nil {
 			group.Port = effectivePort
+		}
+		if group.Password == nil && effectivePassword != nil {
+			group.Password = effectivePassword
 		}
 		if group.SSHBinary == nil && effectiveSSHBinary != nil {
 			group.SSHBinary = effectiveSSHBinary
@@ -427,6 +444,9 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 		}
 		if host.Port == nil && effectivePort != nil {
 			host.Port = effectivePort
+		}
+		if host.Password == nil && effectivePassword != nil {
+			host.Password = effectivePassword
 		}
 		if host.SSHBinary == nil && effectiveSSHBinary != nil {
 			host.SSHBinary = effectiveSSHBinary
@@ -464,6 +484,9 @@ func applyDirectiveSettings(importData *ImportData, directive ImportDirective) {
 		if group.Port == nil && directive.Port != nil {
 			group.Port = directive.Port
 		}
+		if group.Password == nil && directive.Password != nil {
+			group.Password = directive.Password
+		}
 		if group.SSHBinary == nil && directive.SSHBinary != nil {
 			group.SSHBinary = directive.SSHBinary
 		}
@@ -494,6 +517,9 @@ func applyDirectiveSettings(importData *ImportData, directive ImportDirective) {
 		}
 		if host.Port == nil && directive.Port != nil {
 			host.Port = directive.Port
+		}
+		if host.Password == nil && directive.Password != nil {
+			host.Password = directive.Password
 		}
 		if host.SSHBinary == nil && directive.SSHBinary != nil {
 			host.SSHBinary = directive.SSHBinary
@@ -753,6 +779,9 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 			if nestedDirective.Port == nil && directive.Port != nil {
 				nestedDirective.Port = directive.Port
 			}
+			if nestedDirective.Password == nil && directive.Password != nil {
+				nestedDirective.Password = directive.Password
+			}
 			if nestedDirective.SSHBinary == nil && directive.SSHBinary != nil {
 				nestedDirective.SSHBinary = directive.SSHBinary
 			}
@@ -765,7 +794,6 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 			if directive.NoCache {
 				nestedDirective.NoCache = true
 			}
-
 			if nestedDirective.Auth == nil && directive.Auth != nil {
 				nestedDirective.Auth = directive.Auth
 			}

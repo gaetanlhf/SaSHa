@@ -5,7 +5,6 @@ import (
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 	"os"
-	"os/exec"
 	"strings"
 )
 
@@ -130,36 +129,6 @@ func printHelp() {
 	fmt.Println("  -help                     Show this help message")
 	fmt.Println("\nEnvironment variables:")
 	fmt.Println("  SASHA_HOME                Path to SaSHa home directory (default: ~/.sasha)")
-}
-
-func handleApplicationExit(finalModel tea.Model) {
-	if m, ok := finalModel.(model); ok && m.quitting && m.sshCommand != "" {
-		fmt.Println(m.sshCommand)
-
-		shell := os.Getenv("SHELL")
-		if shell == "" {
-			shell = "/bin/bash"
-		}
-
-		var shellCommand string
-
-		switch {
-		case strings.Contains(shell, "bash"):
-			shellCommand = fmt.Sprintf("source ~/.bashrc > /dev/null 2>&1 || true; source ~/.bash_profile > /dev/null 2>&1 || true; %s", m.sshCommand)
-		case strings.Contains(shell, "zsh"):
-			shellCommand = fmt.Sprintf("source ~/.zshrc > /dev/null 2>&1 || true; %s", m.sshCommand)
-		case strings.Contains(shell, "fish"):
-			shellCommand = fmt.Sprintf("source ~/.config/fish/config.fish > /dev/null 2>&1 || true; %s", m.sshCommand)
-		default:
-			shellCommand = m.sshCommand
-		}
-
-		cmd := exec.Command(shell, "-i", "-c", shellCommand)
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Run()
-	}
 }
 
 func forceCleanCache() error {
