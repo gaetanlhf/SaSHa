@@ -32,7 +32,15 @@ func (d errorDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 		return
 	}
 
-	str := fmt.Sprintf("  %s", i.title)
+	var maxWidth int
+	if m.Width() > 0 {
+		maxWidth = m.Width() - 4
+	} else {
+		maxWidth = 80
+	}
+
+	title := truncateText(i.title, maxWidth)
+	str := fmt.Sprintf("  %s", title)
 
 	if i.color != "" {
 		color := lipgloss.Color(i.color)
