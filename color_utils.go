@@ -37,8 +37,9 @@ func getPathColors(config Config, path []string) []string {
 	for _, group := range config.Groups {
 		if group.Name == path[0] {
 			currentGroup = group
-			colors[0] = group.Color
-			if colors[0] == "" {
+			if group.Color != nil && *group.Color != "" {
+				colors[0] = *group.Color
+			} else {
 				colors[0] = "#FFFFFF"
 			}
 			break
@@ -54,8 +55,9 @@ func getPathColors(config Config, path []string) []string {
 		for _, subgroup := range currentGroup.Groups {
 			if subgroup.Name == path[i] {
 				currentGroup = subgroup
-				colors[i] = subgroup.Color
-				if colors[i] == "" {
+				if subgroup.Color != nil && *subgroup.Color != "" {
+					colors[i] = *subgroup.Color
+				} else {
 					colors[i] = colors[i-1]
 				}
 				found = true

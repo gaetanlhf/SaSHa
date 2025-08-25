@@ -24,6 +24,7 @@ SaSHa (SSH Assistant) is a terminal-based SSH connection manager designed to sim
 - ✅ **Theme customization** with colors for servers and groups
 - ✅ **Global configuration inheritance** with settings at the root level that cascade to all groups and servers
 - ✅ **Group-level configuration inheritance** propagating settings from groups to subgroups and servers
+- ✅ **Inheritance with explicit overrides**
 - ✅ **Import functionality** to modularize your server configurations with remote URL support
 - ✅ **Authentication for remote imports** with token and basic auth support
 - ✅ **Smart caching system** for remote imports with flexible cron-based scheduling
@@ -253,7 +254,14 @@ Each group can have the following properties:
 
 #### Multi-Level Configuration Inheritance
 
-SaSHa implements a comprehensive multi-level inheritance system for configuration properties. Settings can be defined at multiple levels and are automatically propagated down the hierarchy unless explicitly overridden.
+SaSHa implements a comprehensive multi-level inheritance system with precise control over when inheritance occurs. Settings can be defined at multiple levels and are automatically propagated down the hierarchy unless explicitly overridden.
+
+**Inheritance Behavior:**
+- **Field not specified**: Inherits from parent (group or global)
+- **Field set to a value**: Uses that specific value
+- **Field set to empty string (`""`)**: Explicitly prevents inheritance and excludes the parameter from the SSH command
+
+This allows for precise control - you can inherit most settings while explicitly disabling specific ones where needed.
 
 **Inheritance Order (from highest to lowest priority):**
 1. **Global Level** (root of config file)
@@ -272,51 +280,77 @@ This hierarchical approach is especially powerful in enterprise environments, wh
 - `auth`: Authentication configuration for remote imports
 - `no_cache`: Caching behavior for remote imports
 
-**Complete inheritance example:**
+**Complete inheritance example with explicit overrides:**
 
 ```yaml
-# Optional global settings - only define what you want to standardize
-user: company-admin              # Optional: set if you want a default user
-cache_schedule: "0 8 * * *"      # Optional: daily cache updates at 8 AM
-auth:                           # Optional: set if you use authenticated remote imports
+# Global settings - define your organizational defaults
+user: company-admin              # Standard admin user for all servers
+port: 2222                      # Company standard SSH port
+ssh_binary: ssh                 # Standard SSH client
+cache_schedule: "0 8 * * *"     # Daily cache updates at 8 AM
+auth:                           # Company API token for remote configs
   token: company_access_token
 
 groups:
   - name: Production
-    # Only override what you need to change
-    color: "#FF0000"  # Make production red for visibility
-
+    color: "#FF0000"              # Make production red for visibility
+    
     hosts:
       - name: Web Server
         host: web.prod.company.com
-        # Only 'host' is required, everything else inherits or uses defaults
-
+        # Inherits: user=company-admin, port=2222, ssh_binary=ssh, color=#FF0000
+        
       - name: Database
         host: db.prod.company.com
-        user: db-admin      # Override only if different from global
-        port: 5432          # Override only if different from default (22)
+        user: db-admin              # Override: use db-admin instead of company-admin
+        port: 5432                  # Override: PostgreSQL port instead of 2222
+        
+      - name: Legacy Server
+        host: legacy.prod.company.com
+        user: ""                    # Explicit override: don't use any username
+        port: 0                     # Explicit override: use default SSH port (22)
+        # Result: ssh legacy.prod.company.com (no -l flag, no -p flag)
 
-    groups:
-      - name: Europe
-        color: "#FF6600"    # Optional: different color for European servers
-        user: eu-admin      # Optional: different user for European team
+  - name: Development
+    color: "#00CC66"              # Green for development
+    user: dev-user                # Override global user for dev servers
+    
+    hosts:
+      - name: Dev Server
+        host: dev.company.com
+        # Inherits: user=dev-user, port=2222, color=#00CC66
+        
+      - name: Public Dev Server  
+        host: public-dev.company.com
+        user: ""                    # Explicit override: no username needed
+        port: 0                     # Explicit override: use standard port 22
+        # Result: ssh public-dev.company.com
 
-        hosts:
-          - name: EU Web Server
-            host: web.eu.prod.company.com
-            # Minimal config - inherits everything else
-
-# Minimal server config - just needs name and host
 hosts:
   - name: Jump Host
     host: jump.company.com
-    # Inherits global user if defined, uses defaults for everything else
+    # Inherits all global settings: user=company-admin, port=2222, etc.
+    
+  - name: Public Server
+    host: public.company.com  
+    user: ""                      # Explicit override: no username required
+    # Result: ssh public.company.com (no -l flag)
 ```
 
-This multi-level inheritance system allows you to:
+**SSH Command Examples from the above config:**
+- Web Server: `ssh -p 2222 company-admin@web.prod.company.com`
+- Database: `ssh -p 5432 db-admin@db.prod.company.com`
+- Legacy Server: `ssh legacy.prod.company.com` (no user, default port)
+- Dev Server: `ssh -p 2222 dev-user@dev.company.com`
+- Public Dev Server: `ssh public-dev.company.com` (no user, default port)
+- Jump Host: `ssh -p 2222 company-admin@jump.company.com`
+- Public Server: `ssh public.company.com` (no user)
+
+This smart inheritance system allows you to:
 - **Start simple**: Just define `name` and `host` for servers - everything else is optional
 - **Set standards**: Define global defaults only for settings you want to standardize
 - **Override selectively**: Change only what's different at each level
+- **Explicitly disable**: Use empty strings or zero values to prevent inheritance
 - **Maintain consistency**: Ensure common settings are applied automatically
 - **Stay flexible**: Override any setting at any level when needed
 
@@ -361,6 +395,12 @@ groups:
         host: web.example.com
         # Will inherit user, port, auth, cache schedule from main config
         # Will inherit color from Production group
+
+      - name: No-Auth Server
+        host: public.example.com
+        user: ""  # Explicit override: no username needed
+        # Result: ssh public.example.com
+
 hosts:
   - name: Standalone Server
     host: server.example.com

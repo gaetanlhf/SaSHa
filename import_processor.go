@@ -82,16 +82,16 @@ func applyGlobalSettings(config *Config) {
 }
 
 func applyGlobalSettingsToDirective(config *Config, directive *ImportDirective) {
-	if directive.User == "" && config.User != "" {
+	if directive.User == nil && config.User != nil {
 		directive.User = config.User
 	}
-	if directive.Port == 0 && config.Port != 0 {
+	if directive.Port == nil && config.Port != nil {
 		directive.Port = config.Port
 	}
-	if directive.SSHBinary == "" && config.SSHBinary != "" {
+	if directive.SSHBinary == nil && config.SSHBinary != nil {
 		directive.SSHBinary = config.SSHBinary
 	}
-	if directive.Color == "" && config.Color != "" {
+	if directive.Color == nil && config.Color != nil {
 		directive.Color = config.Color
 	}
 	if len(directive.ExtraArgs) == 0 && len(config.ExtraArgs) > 0 {
@@ -106,16 +106,16 @@ func applyGlobalSettingsToDirective(config *Config, directive *ImportDirective) 
 }
 
 func applyGlobalSettingsToGroup(config *Config, group *Group) {
-	if group.User == "" && config.User != "" {
+	if group.User == nil && config.User != nil {
 		group.User = config.User
 	}
-	if group.Port == 0 && config.Port != 0 {
+	if group.Port == nil && config.Port != nil {
 		group.Port = config.Port
 	}
-	if group.SSHBinary == "" && config.SSHBinary != "" {
+	if group.SSHBinary == nil && config.SSHBinary != nil {
 		group.SSHBinary = config.SSHBinary
 	}
-	if group.Color == "" && config.Color != "" {
+	if group.Color == nil && config.Color != nil {
 		group.Color = config.Color
 	}
 	if len(group.ExtraArgs) == 0 && len(config.ExtraArgs) > 0 {
@@ -138,16 +138,16 @@ func applyGlobalSettingsToGroup(config *Config, group *Group) {
 }
 
 func applyGlobalSettingsToServer(config *Config, server *Server) {
-	if server.User == "" && config.User != "" {
+	if server.User == nil && config.User != nil {
 		server.User = config.User
 	}
-	if server.Port == 0 && config.Port != 0 {
+	if server.Port == nil && config.Port != nil {
 		server.Port = config.Port
 	}
-	if server.SSHBinary == "" && config.SSHBinary != "" {
+	if server.SSHBinary == nil && config.SSHBinary != nil {
 		server.SSHBinary = config.SSHBinary
 	}
-	if server.Color == "" && config.Color != "" {
+	if server.Color == nil && config.Color != nil {
 		server.Color = config.Color
 	}
 	if len(server.ExtraArgs) == 0 && len(config.ExtraArgs) > 0 {
@@ -173,19 +173,19 @@ func collectImportDirectivesFromGroup(group *Group, path string) []ImportDirecti
 			imports[i].Path = currentPath
 		}
 
-		if imports[i].User == "" && group.User != "" {
+		if imports[i].User == nil && group.User != nil {
 			imports[i].User = group.User
 		}
 
-		if imports[i].Port == 0 && group.Port != 0 {
+		if imports[i].Port == nil && group.Port != nil {
 			imports[i].Port = group.Port
 		}
 
-		if imports[i].SSHBinary == "" && group.SSHBinary != "" {
+		if imports[i].SSHBinary == nil && group.SSHBinary != nil {
 			imports[i].SSHBinary = group.SSHBinary
 		}
 
-		if imports[i].Color == "" && group.Color != "" {
+		if imports[i].Color == nil && group.Color != nil {
 			imports[i].Color = group.Color
 		}
 
@@ -319,16 +319,16 @@ func getGroupInheritedSettings(config *Config, path string) inheritedSettings {
 				currentGroup = subgroup
 				found = true
 
-				if currentGroup.User != "" {
+				if currentGroup.User != nil {
 					settings.User = currentGroup.User
 				}
-				if currentGroup.Port != 0 {
+				if currentGroup.Port != nil {
 					settings.Port = currentGroup.Port
 				}
-				if currentGroup.SSHBinary != "" {
+				if currentGroup.SSHBinary != nil {
 					settings.SSHBinary = currentGroup.SSHBinary
 				}
-				if currentGroup.Color != "" {
+				if currentGroup.Color != nil {
 					settings.Color = currentGroup.Color
 				}
 				if len(currentGroup.ExtraArgs) > 0 {
@@ -369,16 +369,16 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 	effectiveAuth := inherited.Auth
 	effectiveExtraArgs := inherited.ExtraArgs
 
-	if directive.User != "" {
+	if directive.User != nil {
 		effectiveUser = directive.User
 	}
-	if directive.Port != 0 {
+	if directive.Port != nil {
 		effectivePort = directive.Port
 	}
-	if directive.SSHBinary != "" {
+	if directive.SSHBinary != nil {
 		effectiveSSHBinary = directive.SSHBinary
 	}
-	if directive.Color != "" {
+	if directive.Color != nil {
 		effectiveColor = directive.Color
 	}
 	if directive.Auth != nil {
@@ -389,16 +389,16 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 	}
 
 	for _, group := range importData.Groups {
-		if group.User == "" && effectiveUser != "" {
+		if group.User == nil && effectiveUser != nil {
 			group.User = effectiveUser
 		}
-		if group.Port == 0 && effectivePort != 0 {
+		if group.Port == nil && effectivePort != nil {
 			group.Port = effectivePort
 		}
-		if group.SSHBinary == "" && effectiveSSHBinary != "" {
+		if group.SSHBinary == nil && effectiveSSHBinary != nil {
 			group.SSHBinary = effectiveSSHBinary
 		}
-		if group.Color == "" && effectiveColor != "" {
+		if group.Color == nil && effectiveColor != nil {
 			group.Color = effectiveColor
 		}
 		if effectiveNoCache {
@@ -422,16 +422,16 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 	}
 
 	for _, host := range importData.Hosts {
-		if host.User == "" && effectiveUser != "" {
+		if host.User == nil && effectiveUser != nil {
 			host.User = effectiveUser
 		}
-		if host.Port == 0 && effectivePort != 0 {
+		if host.Port == nil && effectivePort != nil {
 			host.Port = effectivePort
 		}
-		if host.SSHBinary == "" && effectiveSSHBinary != "" {
+		if host.SSHBinary == nil && effectiveSSHBinary != nil {
 			host.SSHBinary = effectiveSSHBinary
 		}
-		if host.Color == "" && effectiveColor != "" {
+		if host.Color == nil && effectiveColor != nil {
 			host.Color = effectiveColor
 		}
 		if len(host.ExtraArgs) == 0 && len(effectiveExtraArgs) > 0 {
@@ -458,16 +458,16 @@ func applyAuthToSubgroups(group *Group, auth *AuthConfig) {
 
 func applyDirectiveSettings(importData *ImportData, directive ImportDirective) {
 	for _, group := range importData.Groups {
-		if group.User == "" && directive.User != "" {
+		if group.User == nil && directive.User != nil {
 			group.User = directive.User
 		}
-		if group.Port == 0 && directive.Port != 0 {
+		if group.Port == nil && directive.Port != nil {
 			group.Port = directive.Port
 		}
-		if group.SSHBinary == "" && directive.SSHBinary != "" {
+		if group.SSHBinary == nil && directive.SSHBinary != nil {
 			group.SSHBinary = directive.SSHBinary
 		}
-		if group.Color == "" && directive.Color != "" {
+		if group.Color == nil && directive.Color != nil {
 			group.Color = directive.Color
 		}
 		if directive.NoCache {
@@ -489,16 +489,16 @@ func applyDirectiveSettings(importData *ImportData, directive ImportDirective) {
 	}
 
 	for _, host := range importData.Hosts {
-		if host.User == "" && directive.User != "" {
+		if host.User == nil && directive.User != nil {
 			host.User = directive.User
 		}
-		if host.Port == 0 && directive.Port != 0 {
+		if host.Port == nil && directive.Port != nil {
 			host.Port = directive.Port
 		}
-		if host.SSHBinary == "" && directive.SSHBinary != "" {
+		if host.SSHBinary == nil && directive.SSHBinary != nil {
 			host.SSHBinary = directive.SSHBinary
 		}
-		if host.Color == "" && directive.Color != "" {
+		if host.Color == nil && directive.Color != nil {
 			host.Color = directive.Color
 		}
 		if len(host.ExtraArgs) == 0 && len(directive.ExtraArgs) > 0 {
@@ -608,7 +608,7 @@ func formatHTTPError(urlStr string, err error) error {
 	case strings.Contains(errStr, "no such host"):
 		return fmt.Errorf("🌐 Host not found: %s", urlStr)
 	case strings.Contains(errStr, "timeout"):
-		return fmt.Errorf("ⱱ️ Connection timeout: %s", urlStr)
+		return fmt.Errorf("⏱️ Connection timeout: %s", urlStr)
 	case strings.Contains(errStr, "connection refused"):
 		return fmt.Errorf("🚫 Connection refused: %s", urlStr)
 	case strings.Contains(errStr, "no route to host"):
@@ -747,16 +747,16 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 				}
 			}
 
-			if nestedDirective.User == "" && directive.User != "" {
+			if nestedDirective.User == nil && directive.User != nil {
 				nestedDirective.User = directive.User
 			}
-			if nestedDirective.Port == 0 && directive.Port != 0 {
+			if nestedDirective.Port == nil && directive.Port != nil {
 				nestedDirective.Port = directive.Port
 			}
-			if nestedDirective.SSHBinary == "" && directive.SSHBinary != "" {
+			if nestedDirective.SSHBinary == nil && directive.SSHBinary != nil {
 				nestedDirective.SSHBinary = directive.SSHBinary
 			}
-			if nestedDirective.Color == "" && directive.Color != "" {
+			if nestedDirective.Color == nil && directive.Color != nil {
 				nestedDirective.Color = directive.Color
 			}
 			if len(nestedDirective.ExtraArgs) == 0 && len(directive.ExtraArgs) > 0 {

@@ -71,8 +71,8 @@ func initialModel(config Config) model {
 		singleGroup := config.Groups[0]
 		initialPath = []string{singleGroup.Name}
 
-		if singleGroup.Color != "" {
-			currentColor = singleGroup.Color
+		if singleGroup.Color != nil && *singleGroup.Color != "" {
+			currentColor = *singleGroup.Color
 			initStyles(currentColor)
 			delegate.currentColor = currentColor
 		}
@@ -80,16 +80,16 @@ func initialModel(config Config) model {
 		items = buildGroupItems(singleGroup.Groups, initialPath, currentColor)
 		for _, server := range singleGroup.Hosts {
 			desc := server.Host
-			if server.User != "" {
-				desc = fmt.Sprintf("%s@%s", server.User, server.Host)
+			if server.User != nil && *server.User != "" {
+				desc = fmt.Sprintf("%s@%s", *server.User, server.Host)
 			}
-			if server.Port != 0 && server.Port != 22 {
-				desc = fmt.Sprintf("%s:%d", desc, server.Port)
+			if server.Port != nil && *server.Port != 0 && *server.Port != 22 {
+				desc = fmt.Sprintf("%s:%d", desc, *server.Port)
 			}
 
-			serverColor := server.Color
-			if serverColor == "" {
-				serverColor = currentColor
+			serverColor := currentColor
+			if server.Color != nil && *server.Color != "" {
+				serverColor = *server.Color
 			}
 
 			items = append(items, item{
@@ -106,16 +106,16 @@ func initialModel(config Config) model {
 		for _, server := range config.Hosts {
 			if server.Group == "" {
 				desc := server.Host
-				if server.User != "" {
-					desc = fmt.Sprintf("%s@%s", server.User, server.Host)
+				if server.User != nil && *server.User != "" {
+					desc = fmt.Sprintf("%s@%s", *server.User, server.Host)
 				}
-				if server.Port != 0 && server.Port != 22 {
-					desc = fmt.Sprintf("%s:%d", desc, server.Port)
+				if server.Port != nil && *server.Port != 0 && *server.Port != 22 {
+					desc = fmt.Sprintf("%s:%d", desc, *server.Port)
 				}
 
-				serverColor := server.Color
-				if serverColor == "" {
-					serverColor = currentColor
+				serverColor := currentColor
+				if server.Color != nil && *server.Color != "" {
+					serverColor = *server.Color
 				}
 
 				items = append(items, item{

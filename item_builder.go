@@ -36,9 +36,9 @@ func buildGroupItems(groups []*Group, pathPrefix []string, defaultColor string) 
 		path = append(path, group.Name)
 		pathStr := strings.Join(path, "/")
 
-		groupColor := group.Color
-		if groupColor == "" {
-			groupColor = defaultColor
+		groupColor := defaultColor
+		if group.Color != nil && *group.Color != "" {
+			groupColor = *group.Color
 		}
 
 		var descParts []string

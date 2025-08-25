@@ -14,11 +14,11 @@ func buildHistoryItems(historyData HistoryData, config Config, favoritesData Fav
 		entry := historyData.Entries[i]
 
 		connDetails := entry.Server.Host
-		if entry.Server.User != "" {
-			connDetails = fmt.Sprintf("%s@%s", entry.Server.User, connDetails)
+		if entry.Server.User != nil && *entry.Server.User != "" {
+			connDetails = fmt.Sprintf("%s@%s", *entry.Server.User, connDetails)
 		}
-		if entry.Server.Port != 0 && entry.Server.Port != 22 {
-			connDetails = fmt.Sprintf("%s:%d", connDetails, entry.Server.Port)
+		if entry.Server.Port != nil && *entry.Server.Port != 0 && *entry.Server.Port != 22 {
+			connDetails = fmt.Sprintf("%s:%d", connDetails, *entry.Server.Port)
 		}
 
 		pathLine := ""
@@ -30,7 +30,7 @@ func buildHistoryItems(historyData HistoryData, config Config, favoritesData Fav
 		pathColors := getPathColors(config, entry.Path)
 
 		timeStr := entry.Timestamp.Format(time.RFC822)
-		timeLine := fmt.Sprintf("🕓 %s", timeStr)
+		timeLine := fmt.Sprintf("🕒 %s", timeStr)
 
 		var descLines []string
 		descLines = append(descLines, connDetails)
@@ -41,9 +41,9 @@ func buildHistoryItems(historyData HistoryData, config Config, favoritesData Fav
 
 		description := strings.Join(descLines, "\n")
 
-		serverColor := entry.Server.Color
-		if serverColor == "" {
-			serverColor = "#FFFFFF"
+		serverColor := "#FFFFFF"
+		if entry.Server.Color != nil && *entry.Server.Color != "" {
+			serverColor = *entry.Server.Color
 		}
 
 		favoriteStatus := false

@@ -37,8 +37,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.startInGroup && len(m.config.Groups) == 1 && len(m.config.Hosts) == 0 {
 					singleGroup := m.config.Groups[0]
 					m.currentPath = []string{singleGroup.Name}
-					if singleGroup.Color != "" {
-						m.currentColor = singleGroup.Color
+					if singleGroup.Color != nil && *singleGroup.Color != "" {
+						m.currentColor = *singleGroup.Color
 						initStyles(m.currentColor)
 						delegate.currentColor = m.currentColor
 						m.list.SetDelegate(delegate)

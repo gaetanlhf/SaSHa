@@ -54,8 +54,8 @@ func (m *model) updateColorBasedOnCurrentPath() {
 			pathSoFar = append(pathSoFar, part)
 			tempGroup := findGroupByPathSlice(&m.config, pathSoFar)
 
-			if tempGroup != nil && tempGroup.Color != "" {
-				colorToUse = tempGroup.Color
+			if tempGroup != nil && tempGroup.Color != nil && *tempGroup.Color != "" {
+				colorToUse = *tempGroup.Color
 			}
 		}
 	}
@@ -120,16 +120,16 @@ func (m *model) updateListItems() {
 		for _, server := range m.config.Hosts {
 			if server.Group == "" {
 				desc := server.Host
-				if server.User != "" {
-					desc = fmt.Sprintf("%s@%s", server.User, desc)
+				if server.User != nil && *server.User != "" {
+					desc = fmt.Sprintf("%s@%s", *server.User, desc)
 				}
-				if server.Port != 0 && server.Port != 22 {
-					desc = fmt.Sprintf("%s:%d", desc, server.Port)
+				if server.Port != nil && *server.Port != 0 && *server.Port != 22 {
+					desc = fmt.Sprintf("%s:%d", desc, *server.Port)
 				}
 
-				serverColor := server.Color
-				if serverColor == "" {
-					serverColor = m.currentColor
+				serverColor := m.currentColor
+				if server.Color != nil && *server.Color != "" {
+					serverColor = *server.Color
 				}
 
 				favoriteStatus := false
@@ -163,9 +163,9 @@ func (m *model) updateListItems() {
 				path = append(path, group.Name)
 				pathStr := strings.Join(path, "/")
 
-				groupColor := group.Color
-				if groupColor == "" {
-					groupColor = m.currentColor
+				groupColor := m.currentColor
+				if group.Color != nil && *group.Color != "" {
+					groupColor = *group.Color
 				}
 
 				descParts := []string{}
@@ -205,16 +205,16 @@ func (m *model) updateListItems() {
 
 			for _, server := range currentGroup.Hosts {
 				desc := server.Host
-				if server.User != "" {
-					desc = fmt.Sprintf("%s@%s", server.User, desc)
+				if server.User != nil && *server.User != "" {
+					desc = fmt.Sprintf("%s@%s", *server.User, desc)
 				}
-				if server.Port != 0 && server.Port != 22 {
-					desc = fmt.Sprintf("%s:%d", desc, server.Port)
+				if server.Port != nil && *server.Port != 0 && *server.Port != 22 {
+					desc = fmt.Sprintf("%s:%d", desc, *server.Port)
 				}
 
-				serverColor := server.Color
-				if serverColor == "" {
-					serverColor = m.currentColor
+				serverColor := m.currentColor
+				if server.Color != nil && *server.Color != "" {
+					serverColor = *server.Color
 				}
 
 				favoriteStatus := false

@@ -11,11 +11,11 @@ func buildFavoritesItems(favoritesData FavoritesData, config Config) []list.Item
 
 	for _, entry := range favoritesData.Entries {
 		connDetails := entry.Server.Host
-		if entry.Server.User != "" {
-			connDetails = fmt.Sprintf("%s@%s", entry.Server.User, connDetails)
+		if entry.Server.User != nil && *entry.Server.User != "" {
+			connDetails = fmt.Sprintf("%s@%s", *entry.Server.User, connDetails)
 		}
-		if entry.Server.Port != 0 && entry.Server.Port != 22 {
-			connDetails = fmt.Sprintf("%s:%d", connDetails, entry.Server.Port)
+		if entry.Server.Port != nil && *entry.Server.Port != 0 && *entry.Server.Port != 22 {
+			connDetails = fmt.Sprintf("%s:%d", connDetails, *entry.Server.Port)
 		}
 
 		pathLine := ""
@@ -27,8 +27,8 @@ func buildFavoritesItems(favoritesData FavoritesData, config Config) []list.Item
 		pathColors := getPathColors(config, entry.Path)
 
 		extraInfo := ""
-		if entry.Server.SSHBinary != "" && entry.Server.SSHBinary != "ssh" {
-			extraInfo = fmt.Sprintf("SSH Client: %s", entry.Server.SSHBinary)
+		if entry.Server.SSHBinary != nil && *entry.Server.SSHBinary != "" && *entry.Server.SSHBinary != "ssh" {
+			extraInfo = fmt.Sprintf("SSH Client: %s", *entry.Server.SSHBinary)
 		}
 
 		var descLines []string
@@ -42,9 +42,9 @@ func buildFavoritesItems(favoritesData FavoritesData, config Config) []list.Item
 
 		description := strings.Join(descLines, "\n")
 
-		serverColor := entry.Server.Color
-		if serverColor == "" {
-			serverColor = "#FFFFFF"
+		serverColor := "#FFFFFF"
+		if entry.Server.Color != nil && *entry.Server.Color != "" {
+			serverColor = *entry.Server.Color
 		}
 
 		items = append(items, item{

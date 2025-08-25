@@ -13,28 +13,28 @@ func buildSSHCommand(server *Server, parentGroup *Group) string {
 	if parentGroup != nil {
 		parentSettings := getInheritedGroupSettings(parentGroup)
 
-		if parentSettings.SSHBinary != "" {
-			sshBinary = parentSettings.SSHBinary
+		if parentSettings.SSHBinary != nil && *parentSettings.SSHBinary != "" {
+			sshBinary = *parentSettings.SSHBinary
 		}
-		if parentSettings.Port != 0 {
-			port = parentSettings.Port
+		if parentSettings.Port != nil && *parentSettings.Port != 0 {
+			port = *parentSettings.Port
 		}
-		if parentSettings.User != "" {
-			user = parentSettings.User
+		if parentSettings.User != nil && *parentSettings.User != "" {
+			user = *parentSettings.User
 		}
 		if len(parentSettings.ExtraArgs) > 0 {
 			extraArgs = append([]string{}, parentSettings.ExtraArgs...)
 		}
 	}
 
-	if server.SSHBinary != "" {
-		sshBinary = server.SSHBinary
+	if server.SSHBinary != nil && *server.SSHBinary != "" {
+		sshBinary = *server.SSHBinary
 	}
-	if server.Port != 0 {
-		port = server.Port
+	if server.Port != nil && *server.Port != 0 {
+		port = *server.Port
 	}
-	if server.User != "" {
-		user = server.User
+	if server.User != nil && *server.User != "" {
+		user = *server.User
 	}
 
 	if len(server.ExtraArgs) > 0 {

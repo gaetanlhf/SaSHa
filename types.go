@@ -12,22 +12,22 @@ type Config struct {
 	ImportErrors     []string          `yaml:"-"`
 	NoCache          bool              `yaml:"no_cache,omitempty"`
 	Auth             *AuthConfig       `yaml:"auth,omitempty"`
-	Color            string            `yaml:"color,omitempty"`
-	User             string            `yaml:"user,omitempty"`
-	Port             int               `yaml:"port,omitempty"`
+	Color            *string           `yaml:"color,omitempty"`
+	User             *string           `yaml:"user,omitempty"`
+	Port             *int              `yaml:"port,omitempty"`
 	ExtraArgs        []string          `yaml:"extra_args,omitempty"`
-	SSHBinary        string            `yaml:"ssh_binary,omitempty"`
+	SSHBinary        *string           `yaml:"ssh_binary,omitempty"`
 }
 
 type Group struct {
 	Name      string            `yaml:"name"`
 	Hosts     []*Server         `yaml:"hosts"`
 	Groups    []*Group          `yaml:"groups,omitempty"`
-	User      string            `yaml:"user,omitempty"`
-	Port      int               `yaml:"port,omitempty"`
+	User      *string           `yaml:"user,omitempty"`
+	Port      *int              `yaml:"port,omitempty"`
 	ExtraArgs []string          `yaml:"extra_args,omitempty"`
-	SSHBinary string            `yaml:"ssh_binary,omitempty"`
-	Color     string            `yaml:"color,omitempty"`
+	SSHBinary *string           `yaml:"ssh_binary,omitempty"`
+	Color     *string           `yaml:"color,omitempty"`
 	Imports   []ImportDirective `yaml:"imports,omitempty"`
 	NoCache   bool              `yaml:"no_cache,omitempty"`
 	Auth      *AuthConfig       `yaml:"auth,omitempty"`
@@ -36,12 +36,12 @@ type Group struct {
 type Server struct {
 	Name      string   `yaml:"name"`
 	Host      string   `yaml:"host"`
-	Port      int      `yaml:"port,omitempty"`
-	User      string   `yaml:"user,omitempty"`
+	Port      *int     `yaml:"port,omitempty"`
+	User      *string  `yaml:"user,omitempty"`
 	ExtraArgs []string `yaml:"extra_args,omitempty"`
 	Group     string   `yaml:"group,omitempty"`
-	SSHBinary string   `yaml:"ssh_binary,omitempty"`
-	Color     string   `yaml:"color,omitempty"`
+	SSHBinary *string  `yaml:"ssh_binary,omitempty"`
+	Color     *string  `yaml:"color,omitempty"`
 }
 
 type ImportConfig struct {
@@ -54,11 +54,11 @@ type ImportDirective struct {
 	File      string      `yaml:"file"`
 	Path      string      `yaml:"path,omitempty"`
 	Group     string      `yaml:"group,omitempty"`
-	User      string      `yaml:"user,omitempty"`
-	Port      int         `yaml:"port,omitempty"`
+	User      *string     `yaml:"user,omitempty"`
+	Port      *int        `yaml:"port,omitempty"`
 	ExtraArgs []string    `yaml:"extra_args,omitempty"`
-	SSHBinary string      `yaml:"ssh_binary,omitempty"`
-	Color     string      `yaml:"color,omitempty"`
+	SSHBinary *string     `yaml:"ssh_binary,omitempty"`
+	Color     *string     `yaml:"color,omitempty"`
 	NoCache   bool        `yaml:"no_cache,omitempty"`
 	Auth      *AuthConfig `yaml:"auth,omitempty"`
 }

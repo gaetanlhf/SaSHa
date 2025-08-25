@@ -1,11 +1,11 @@
 package main
 
 type inheritedSettings struct {
-	User      string
-	Port      int
+	User      *string
+	Port      *int
 	ExtraArgs []string
-	SSHBinary string
-	Color     string
+	SSHBinary *string
+	Color     *string
 	NoCache   bool
 	Auth      *AuthConfig
 }
@@ -50,12 +50,12 @@ func propagateInheritedSettings(config *Config) {
 
 	for _, group := range config.Groups {
 		propagateGroupSettings(group, inheritedSettings{
-			User:      group.User,
-			Port:      group.Port,
-			SSHBinary: group.SSHBinary,
-			Color:     group.Color,
-			ExtraArgs: group.ExtraArgs,
-			NoCache:   group.NoCache,
+			User:      config.User,
+			Port:      config.Port,
+			SSHBinary: config.SSHBinary,
+			Color:     config.Color,
+			ExtraArgs: config.ExtraArgs,
+			NoCache:   config.NoCache,
 			Auth:      globalAuth,
 		})
 	}
@@ -110,16 +110,16 @@ func propagateGroupSettings(group *Group, parentSettings inheritedSettings) {
 		settings.ExtraArgs = append([]string{}, parentSettings.ExtraArgs...)
 	}
 
-	if group.User != "" {
+	if group.User != nil {
 		settings.User = group.User
 	}
-	if group.Port != 0 {
+	if group.Port != nil {
 		settings.Port = group.Port
 	}
-	if group.SSHBinary != "" {
+	if group.SSHBinary != nil {
 		settings.SSHBinary = group.SSHBinary
 	}
-	if group.Color != "" {
+	if group.Color != nil {
 		settings.Color = group.Color
 	}
 	if len(group.ExtraArgs) > 0 {
@@ -145,16 +145,16 @@ func propagateGroupSettings(group *Group, parentSettings inheritedSettings) {
 	}
 
 	for _, host := range group.Hosts {
-		if host.User == "" && settings.User != "" {
+		if host.User == nil && settings.User != nil {
 			host.User = settings.User
 		}
-		if host.Port == 0 && settings.Port != 0 {
+		if host.Port == nil && settings.Port != nil {
 			host.Port = settings.Port
 		}
-		if host.SSHBinary == "" && settings.SSHBinary != "" {
+		if host.SSHBinary == nil && settings.SSHBinary != nil {
 			host.SSHBinary = settings.SSHBinary
 		}
-		if host.Color == "" && settings.Color != "" {
+		if host.Color == nil && settings.Color != nil {
 			host.Color = settings.Color
 		}
 		if len(host.ExtraArgs) == 0 && len(settings.ExtraArgs) > 0 {
