@@ -540,7 +540,7 @@ func isURL(path string) bool {
 func readRemoteFile(urlStr string, schedule string, noCache bool, auth *AuthConfig) (ImportData, bool, error) {
 	var emptyData ImportData
 
-	if !noCache {
+	if !noCache && schedule != "" {
 		cachedData, needsUpdate, err := cacheManager.GetCachedData(urlStr, schedule, auth)
 		if err == nil && cachedData != nil && !needsUpdate {
 			return *cachedData, false, nil
@@ -553,7 +553,7 @@ func readRemoteFile(urlStr string, schedule string, noCache bool, auth *AuthConf
 
 	req, err := http.NewRequest("GET", urlStr, nil)
 	if err != nil {
-		if !noCache {
+		if !noCache && schedule != "" {
 			cachedData, _, cacheErr := cacheManager.GetCachedData(urlStr, schedule, auth)
 			if cacheErr == nil && cachedData != nil {
 				return *cachedData, true, formatHTTPError(urlStr, err)
@@ -578,7 +578,7 @@ func readRemoteFile(urlStr string, schedule string, noCache bool, auth *AuthConf
 
 	resp, err := client.Do(req)
 	if err != nil {
-		if !noCache {
+		if !noCache && schedule != "" {
 			cachedData, _, cacheErr := cacheManager.GetCachedData(urlStr, schedule, auth)
 			if cacheErr == nil && cachedData != nil {
 				return *cachedData, true, formatHTTPError(urlStr, err)
@@ -589,7 +589,7 @@ func readRemoteFile(urlStr string, schedule string, noCache bool, auth *AuthConf
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		if !noCache {
+		if !noCache && schedule != "" {
 			cachedData, _, cacheErr := cacheManager.GetCachedData(urlStr, schedule, auth)
 			if cacheErr == nil && cachedData != nil {
 				return *cachedData, true, fmt.Errorf("HTTP error: %s for %s", resp.Status, urlStr)
@@ -600,7 +600,7 @@ func readRemoteFile(urlStr string, schedule string, noCache bool, auth *AuthConf
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		if !noCache {
+		if !noCache && schedule != "" {
 			cachedData, _, cacheErr := cacheManager.GetCachedData(urlStr, schedule, auth)
 			if cacheErr == nil && cachedData != nil {
 				return *cachedData, true, fmt.Errorf("failed to read response body from %s: %w", urlStr, err)
@@ -611,7 +611,7 @@ func readRemoteFile(urlStr string, schedule string, noCache bool, auth *AuthConf
 
 	var importData ImportData
 	if err := yaml.Unmarshal(data, &importData); err != nil {
-		if !noCache {
+		if !noCache && schedule != "" {
 			cachedData, _, cacheErr := cacheManager.GetCachedData(urlStr, schedule, auth)
 			if cacheErr == nil && cachedData != nil {
 				return *cachedData, true, fmt.Errorf("failed to parse imported data from %s: %w", urlStr, err)
