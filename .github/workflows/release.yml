@@ -113,19 +113,19 @@ jobs:
 
       - name: Build for Linux x64
         run: |
-          GOOS=linux GOARCH=amd64 go build -ldflags="-X 'main.version=${{ env.VERSION }}'" -o ./bin/sasha-linux-amd64
+          GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X 'main.version=${{ env.VERSION }}'" -o ./bin/sasha-linux-amd64
 
       - name: Build for Linux ARM64
         run: |
-          GOOS=linux GOARCH=arm64 go build -ldflags="-X 'main.version=${{ env.VERSION }}'" -o ./bin/sasha-linux-arm64
+          GOOS=linux GOARCH=arm64 go build -ldflags="-s -w -X 'main.version=${{ env.VERSION }}'" -o ./bin/sasha-linux-arm64
 
       - name: Build for macOS Intel
         run: |
-          GOOS=darwin GOARCH=amd64 go build -ldflags="-X 'main.version=${{ env.VERSION }}'" -o ./bin/sasha-darwin-amd64
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X 'main.version=${{ env.VERSION }}'" -o ./bin/sasha-darwin-amd64
 
       - name: Build for macOS ARM (Apple Silicon)
         run: |
-          GOOS=darwin GOARCH=arm64 go build -ldflags="-X 'main.version=${{ env.VERSION }}'" -o ./bin/sasha-darwin-arm64
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X 'main.version=${{ env.VERSION }}'" -o ./bin/sasha-darwin-arm64
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
