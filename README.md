@@ -20,7 +20,8 @@ SaSHa (SSH Assistant) is a terminal-based SSH connection manager designed to sim
 - ✅ **Connection history** to quickly access recently used servers
 - ✅ **Favorites system** to mark and easily access important servers
 - ✅ **Filtering** to quickly find servers in large configurations
-- ✅ **Custom SSH options** per server or group (port, user, additional arguments)
+- ✅ **Custom SSH options** per server or group (port, user, password, additional arguments)
+- ✅ **Automatic password authentication** with secure PTY handling
 - ✅ **Theme customization** with colors for servers and groups
 - ✅ **Global configuration inheritance** with settings at the root level that cascade to all groups and servers
 - ✅ **Group-level configuration inheritance** propagating settings from groups to subgroups and servers
@@ -101,7 +102,7 @@ history_size: 20
 # Enable or disable favorites feature
 favorites_enabled: true
 
-# Cache update schedule using cron format (optional, defaults to every 6 hours)
+# Cache update schedule using cron format (optional, no automatic refresh if not specified)
 cache_schedule: "0 8 * * *"  # Update cache daily at 8 AM
 
 # Define root-level groups
@@ -112,10 +113,12 @@ groups:
       - name: Web Server
         host: web.example.com
         user: admin
+        password: mypassword123  # Automatic password authentication
       - name: Database
         host: db.example.com
         user: dbadmin
         port: 2222
+        password: dbpass456
 
   - name: Development
     color: "#33FF57"
@@ -129,12 +132,14 @@ groups:
           - name: QA Server
             host: qa.example.com
             user: tester
+            password: testpass789
 
 # Define root-level standalone servers
 hosts:
   - name: Home Server
     host: homeserver.local
     user: admin
+    password: homepass123
     color: "#5733FF"  # Custom color for this server
 ```
 
@@ -146,6 +151,7 @@ For larger setups, you can define global settings that will be inherited by all 
 # Optional global settings - inherited by everything unless overridden
 user: admin                    # Default user for all servers
 port: 2222                     # Default port for all servers  
+password: default_password     # Default password for all servers
 color: "#3366FF"               # Default color theme
 ssh_binary: ssh                # Default SSH binary
 extra_args: ["-o StrictHostKeyChecking=no"]  # Default SSH arguments
@@ -156,21 +162,73 @@ cache_schedule: "0 8 * * *"    # Daily cache updates at 8 AM
 groups:
   - name: Production
     color: "#FF5733"  # Overrides global color for this group and its children
+    password: prod_password  # Override global password for production servers
     hosts:
       - name: Web Server
         host: web.example.com
-        # Inherits user, port, auth from global settings
-        # But uses Production group's color
+        # Inherits user, port, password from global settings
+        # But uses Production group's color and password
       - name: Database
         host: db.example.com
         user: dbadmin  # Overrides global user
         port: 3306     # Overrides global port
+        password: special_db_password  # Overrides group password
 
 hosts:
   - name: Home Server
     host: homeserver.local
-    # Inherits all global settings (user, port, color, ssh_binary, extra_args)
+    # Inherits all global settings (user, port, password, color, ssh_binary, extra_args)
 ```
+
+### Password Authentication
+
+SaSHa supports automatic password authentication for SSH connections. When a password is configured, SaSHa will:
+
+1. Automatically detect password prompts during SSH connection
+2. Provide the password securely without user interaction
+3. Handle authentication failures gracefully
+4. Display a clean "Connecting to [hostname]..." message
+
+**Password configuration examples:**
+
+```yaml
+# Global password for all servers
+password: company_default_password
+
+groups:
+  - name: Production
+    password: production_password  # Override for production servers
+    hosts:
+      - name: Web Server
+        host: web.example.com
+        # Uses production_password
+
+      - name: Special Server
+        host: special.example.com
+        password: unique_password  # Override with server-specific password
+
+      - name: Key-based Server
+        host: keyauth.example.com
+        password: ""  # Explicit override: disable password auth for this server
+
+  - name: Development
+    # No password specified - inherits global password
+    hosts:
+      - name: Dev Server
+        host: dev.example.com
+        # Uses company_default_password from global config
+```
+
+**Security considerations:**
+- Passwords are stored in plain text in the configuration file
+- Ensure proper file permissions on your configuration file (`chmod 600 ~/.sasha/config.yaml`)
+- Consider using SSH keys instead of passwords when possible
+- Use different passwords for different environment tiers (development, staging, production)
+
+**Password inheritance behavior:**
+- Like other settings, passwords follow the inheritance hierarchy
+- Setting `password: ""` explicitly disables password authentication for that server
+- Servers without password configuration will attempt key-based authentication
 
 ### Configuration Components
 
@@ -180,12 +238,13 @@ At the root level of your configuration, you can optionally define global settin
 
 - `user`: Default SSH username for all servers (optional)
 - `port`: Default SSH port for all servers (optional)
+- `password`: Default SSH password for all servers (optional)
 - `color`: Default color theme for all groups and servers (optional)
 - `extra_args`: Default additional SSH command-line arguments for all servers (optional)
 - `ssh_binary`: Default SSH binary to use for all servers (optional)
 - `auth`: Default authentication configuration for remote imports (optional)
 - `no_cache`: Disable caching for all remote imports (optional)
-- `cache_schedule`: Cron expression for cache update schedule (optional, defaults to "0 */6 * * *")
+- `cache_schedule`: Cron expression for cache update schedule (optional, no automatic refresh if not specified)
 
 #### Cache Schedule Configuration
 
@@ -231,6 +290,7 @@ Each server can have the following properties:
 - `host`: Hostname or IP address (required)
 - `user`: SSH username (optional, inherits from parent group or global)
 - `port`: SSH port (optional, inherits from parent group or global, defaults to 22)
+- `password`: SSH password for automatic authentication (optional, inherits from parent group or global)
 - `color`: Custom color for this server (optional, inherits from parent group or global)
 - `extra_args`: Additional SSH command-line arguments (optional, inherits from parent group or global)
 - `ssh_binary`: Custom SSH binary to use (optional, inherits from parent group or global)
@@ -245,6 +305,7 @@ Each group can have the following properties:
 - `color`: Custom color for this group (optional, inherits from parent group or global)
 - `user`: Default username for all servers in this group (optional, inherits from parent group or global)
 - `port`: Default port for all servers in this group (optional, inherits from parent group or global)
+- `password`: Default password for all servers in this group (optional, inherits from parent group or global)
 - `extra_args`: Default additional SSH arguments for all servers in this group (optional, inherits from parent group or global)
 - `ssh_binary`: Default SSH binary for all servers in this group (optional, inherits from parent group or global)
 - `auth`: Authentication configuration for imports within this group (optional, inherits from parent group or global)
@@ -259,7 +320,7 @@ SaSHa implements a comprehensive multi-level inheritance system with precise con
 **Inheritance Behavior:**
 - **Field not specified**: Inherits from parent (group or global)
 - **Field set to a value**: Uses that specific value
-- **Field set to empty string (`""`)**: Explicitly prevents inheritance and excludes the parameter from the SSH command
+- **Field set to empty string (`""`) or zero (`0`)**: Explicitly prevents inheritance and excludes the parameter from the SSH command
 
 This allows for precise control - you can inherit most settings while explicitly disabling specific ones where needed.
 
@@ -274,6 +335,7 @@ This hierarchical approach is especially powerful in enterprise environments, wh
 **The inheritance applies to the following properties:**
 - `user`: SSH username
 - `port`: SSH port
+- `password`: SSH password
 - `extra_args`: Additional SSH command-line arguments
 - `ssh_binary`: Custom SSH binary
 - `color`: Visual theme color
@@ -286,6 +348,7 @@ This hierarchical approach is especially powerful in enterprise environments, wh
 # Global settings - define your organizational defaults
 user: company-admin              # Standard admin user for all servers
 port: 2222                      # Company standard SSH port
+password: company_default_pass   # Default password for password-auth servers
 ssh_binary: ssh                 # Standard SSH client
 cache_schedule: "0 8 * * *"     # Daily cache updates at 8 AM
 auth:                           # Company API token for remote configs
@@ -294,57 +357,62 @@ auth:                           # Company API token for remote configs
 groups:
   - name: Production
     color: "#FF0000"              # Make production red for visibility
+    password: secure_prod_pass    # Override with production-specific password
     
     hosts:
       - name: Web Server
         host: web.prod.company.com
-        # Inherits: user=company-admin, port=2222, ssh_binary=ssh, color=#FF0000
+        # Inherits: user=company-admin, port=2222, password=secure_prod_pass, ssh_binary=ssh, color=#FF0000
         
       - name: Database
         host: db.prod.company.com
         user: db-admin              # Override: use db-admin instead of company-admin
         port: 5432                  # Override: PostgreSQL port instead of 2222
+        password: special_db_pass   # Override: database-specific password
         
-      - name: Legacy Server
-        host: legacy.prod.company.com
-        user: ""                    # Explicit override: don't use any username
+      - name: Key-only Server
+        host: secure.prod.company.com
+        password: ""                # Explicit override: disable password auth, use keys only
         port: 0                     # Explicit override: use default SSH port (22)
-        # Result: ssh legacy.prod.company.com (no -l flag, no -p flag)
+        # Result: ssh company-admin@secure.prod.company.com (no password, default port)
 
   - name: Development
     color: "#00CC66"              # Green for development
     user: dev-user                # Override global user for dev servers
+    password: dev_password        # Override global password for dev servers
     
     hosts:
       - name: Dev Server
         host: dev.company.com
-        # Inherits: user=dev-user, port=2222, color=#00CC66
+        # Inherits: user=dev-user, port=2222, password=dev_password, color=#00CC66
         
       - name: Public Dev Server  
         host: public-dev.company.com
         user: ""                    # Explicit override: no username needed
+        password: ""                # Explicit override: no password needed
         port: 0                     # Explicit override: use standard port 22
-        # Result: ssh public-dev.company.com
+        # Result: ssh public-dev.company.com (no auth)
 
 hosts:
   - name: Jump Host
     host: jump.company.com
-    # Inherits all global settings: user=company-admin, port=2222, etc.
+    # Inherits all global settings: user=company-admin, port=2222, password=company_default_pass, etc.
     
   - name: Public Server
     host: public.company.com  
     user: ""                      # Explicit override: no username required
-    # Result: ssh public.company.com (no -l flag)
+    password: ""                  # Explicit override: no password required
+    # Result: ssh public.company.com (no auth)
 ```
 
 **SSH Command Examples from the above config:**
-- Web Server: `ssh -p 2222 company-admin@web.prod.company.com`
-- Database: `ssh -p 5432 db-admin@db.prod.company.com`
-- Legacy Server: `ssh legacy.prod.company.com` (no user, default port)
-- Dev Server: `ssh -p 2222 dev-user@dev.company.com`
-- Public Dev Server: `ssh public-dev.company.com` (no user, default port)
-- Jump Host: `ssh -p 2222 company-admin@jump.company.com`
-- Public Server: `ssh public.company.com` (no user)
+- Web Server: `ssh -p 2222 company-admin@web.prod.company.com` (with password: secure_prod_pass)
+- Database: `ssh -p 5432 db-admin@db.prod.company.com` (with password: special_db_pass)
+- Key-only Server: `ssh company-admin@secure.prod.company.com` (key-based auth, default port)
+- Dev Server: `ssh -p 2222 dev-user@dev.company.com` (with password: dev_password)
+- Public Dev Server: `ssh public-dev.company.com` (no auth, default port)
+- Jump Host: `ssh -p 2222 company-admin@jump.company.com` (with password: company_default_pass)
+- Public Server: `ssh public.company.com` (no auth)
 
 This smart inheritance system allows you to:
 - **Start simple**: Just define `name` and `host` for servers - everything else is optional
@@ -353,6 +421,7 @@ This smart inheritance system allows you to:
 - **Explicitly disable**: Use empty strings or zero values to prevent inheritance
 - **Maintain consistency**: Ensure common settings are applied automatically
 - **Stay flexible**: Override any setting at any level when needed
+- **Secure by default**: Define secure passwords globally and override only when necessary
 
 #### Importing Configurations
 
@@ -361,6 +430,7 @@ For complex setups, you can split your configuration across multiple files and i
 ```yaml
 # Main config file - define only what you want to standardize globally
 user: company-admin     # Optional: only if you want a default user
+password: company_pass  # Optional: only if you want a default password
 cache_schedule: "0 8 * * *"  # Optional: daily updates at 8 AM
 auth:                   # Optional: only if you use authenticated remote imports
   token: company_access_token
@@ -368,7 +438,8 @@ auth:                   # Optional: only if you use authenticated remote imports
 imports:
   - file: ~/.sasha/production-servers.yaml
   - file: ~/.sasha/development-servers.yaml
-    user: devuser  # Override global user for all imported dev servers
+    user: devuser      # Override global user for all imported dev servers
+    password: devpass  # Override global password for all imported dev servers
   - file: https://config.company.com/shared-servers.yaml
     # Uses global auth and cache schedule automatically if defined
 
@@ -390,21 +461,23 @@ In the imported files, simply define groups and servers that will inherit from t
 groups:
   - name: Production
     color: "#FF0000"
+    password: prod_secure_pass  # Override imported password for production
     hosts:
       - name: Web Server
         host: web.example.com
-        # Will inherit user, port, auth, cache schedule from main config
+        # Will inherit user, port, password from Production group
         # Will inherit color from Production group
 
       - name: No-Auth Server
         host: public.example.com
-        user: ""  # Explicit override: no username needed
+        user: ""        # Explicit override: no username needed
+        password: ""    # Explicit override: no password needed
         # Result: ssh public.example.com
 
 hosts:
   - name: Standalone Server
     host: server.example.com
-    # Will inherit all settings from main config
+    # Will inherit all settings from main config including password
 ```
 
 Using version control for your configuration files allows you to track infrastructure changes over time and easily share server access configurations with team members. This approach treats your SSH access management as "configuration as code."
@@ -415,6 +488,7 @@ Using version control for your configuration files allows you to track infrastru
 - `path`: Group path where the imported items will be placed (optional)
 - `user`: Override username for all imported servers (optional)
 - `port`: Override port for all imported servers (optional)
+- `password`: Override password for all imported servers (optional)
 - `extra_args`: Override additional SSH arguments for all imported servers (optional)
 - `ssh_binary`: Override SSH binary for all imported servers (optional)
 - `color`: Override color for all imported groups and servers (optional)
@@ -478,10 +552,10 @@ sasha --refresh-cache    # Clear cache but continue loading
 **Cache Schedule Examples:**
 
 - `"0 8 * * *"` - Daily at 8 AM
-- `"0 */6 * * *"` - Every 6 hours (default)
 - `"0 9 * * 1"` - Weekly on Monday at 9 AM
 - `"*/30 * * * *"` - Every 30 minutes
 - `"0 8,20 * * *"` - Twice daily at 8 AM and 8 PM
+- Not specified - No automatic refresh (cache only updated manually)
 
 #### Authentication for Remote Imports
 
@@ -659,7 +733,7 @@ Using `sasha --filter-top-level-groups=Work` will only show the Work group and i
 - Press `f` to toggle favorite status of the selected server
 - Press `q` to quit
 
-When you select a server, SaSHa will build the SSH command and execute it for you.
+When you select a server, SaSHa will display "Connecting to [hostname]..." and execute the SSH connection for you. If a password is configured, it will be provided automatically during the authentication process.
 
 ## License
 
