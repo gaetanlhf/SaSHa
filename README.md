@@ -11,7 +11,7 @@
 
 ## About
 
-SaSHa (SSH Assistant) is a terminal-based SSH connection manager designed to simplify managing and connecting to multiple SSH servers. It provides a beautiful and intuitive text user interface (TUI) that organizes servers in a hierarchical structure with customizable colors and navigation.
+SaSHa is a terminal-based SSH connection manager designed to simplify managing and connecting to multiple SSH servers. It provides a beautiful and intuitive text user interface (TUI) that organizes servers in a hierarchical structure with customizable colors and navigation.
 
 ## Features
 
