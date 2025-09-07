@@ -95,15 +95,12 @@ export SASHA_HOME=/path/to/your/sasha/directory
 Here's a simple example showing the main configuration structure:
 
 ```yaml
-# Define history size (number of entries to keep)
-# Set to 0 to disable history
-history_size: 20
-
-# Enable or disable favorites feature
-favorites_enabled: true
-
-# Cache update schedule using cron format (optional, no automatic refresh if not specified)
-cache_schedule: "0 8 * * *"  # Update cache daily at 8 AM
+# Application features configuration
+features:
+  history_size: 20           # Number of history entries to keep (0 to disable)
+  favorites_enabled: true    # Enable or disable favorites feature
+  cache_schedule: "0 8 * * *" # Cache update schedule using cron format
+  allow_web_imports: false   # Enable/disable remote HTTP/HTTPS imports
 
 # Define root-level groups
 groups:
@@ -155,9 +152,16 @@ password: default_password     # Default password for all servers
 color: "#3366FF"               # Default color theme
 ssh_binary: ssh                # Default SSH binary
 extra_args: ["-o StrictHostKeyChecking=no"]  # Default SSH arguments
+no_cache: false                # Global caching behavior
 auth:                          # Default auth for remote imports
   token: global_token
-cache_schedule: "0 8 * * *"    # Daily cache updates at 8 AM
+
+# Application features
+features:
+  history_size: 20             # Keep 20 connection history entries
+  favorites_enabled: true      # Enable favorites system
+  cache_schedule: "0 8 * * *"  # Daily cache updates at 8 AM
+  allow_web_imports: true      # Allow remote HTTP/HTTPS imports
 
 groups:
   - name: Production
@@ -179,6 +183,42 @@ hosts:
     host: homeserver.local
     # Inherits all global settings (user, port, password, color, ssh_binary, extra_args)
 ```
+
+### Features Configuration
+
+The `features` section controls application behavior and security settings:
+
+#### History Configuration
+```yaml
+features:
+  history_size: 20    # Keep 20 recent connections (default: 20)
+  # history_size: 0   # Disable history completely
+  # history_size: -1  # Use default (20)
+```
+
+#### Favorites System
+```yaml
+features:
+  favorites_enabled: true   # Enable favorites (default: false)
+  # favorites_enabled: false # Disable favorites
+```
+
+#### Cache Management
+```yaml
+features:
+  cache_schedule: "0 8 * * *"  # Daily at 8 AM (cron format)
+  # cache_schedule: "*/30 * * * *"  # Every 30 minutes
+  # cache_schedule: "0 9 * * 1"     # Weekly on Monday at 9 AM
+```
+
+#### Web Import Security
+```yaml
+features:
+  allow_web_imports: false  # Disable remote HTTP/HTTPS imports (default: false)
+  # allow_web_imports: true # Allow remote imports
+```
+
+When `allow_web_imports` is set to `false`, SaSHa will block all HTTP/HTTPS imports for security, while still allowing local file imports. This provides granular control over remote configuration access.
 
 ### Password Authentication
 
@@ -244,7 +284,6 @@ At the root level of your configuration, you can optionally define global settin
 - `ssh_binary`: Default SSH binary to use for all servers (optional)
 - `auth`: Default authentication configuration for remote imports (optional)
 - `no_cache`: Disable caching for all remote imports (optional)
-- `cache_schedule`: Cron expression for cache update schedule (optional, no automatic refresh if not specified)
 
 #### Cache Schedule Configuration
 
@@ -254,25 +293,32 @@ The `cache_schedule` setting uses cron format to control when cached remote impo
 # Common cache schedule examples:
 
 # Every 6 hours (default if not specified)
-cache_schedule: "0 */6 * * *"
+features:
+  cache_schedule: "0 */6 * * *"
 
 # Daily at 8 AM
-cache_schedule: "0 8 * * *"
+features:
+  cache_schedule: "0 8 * * *"
 
 # Daily at 9 PM
-cache_schedule: "0 21 * * *"
+features:
+  cache_schedule: "0 21 * * *"
 
 # Twice daily (8 AM and 8 PM)
-cache_schedule: "0 8,20 * * *"
+features:
+  cache_schedule: "0 8,20 * * *"
 
 # Weekly on Monday at 9 AM
-cache_schedule: "0 9 * * 1"
+features:
+  cache_schedule: "0 9 * * 1"
 
 # Every hour
-cache_schedule: "0 * * * *"
+features:
+  cache_schedule: "0 * * * *"
 
 # Every 30 minutes
-cache_schedule: "*/30 * * * *"
+features:
+  cache_schedule: "*/30 * * * *"
 ```
 
 **Cron format:** `minute hour day-of-month month day-of-week`
@@ -350,9 +396,12 @@ user: company-admin              # Standard admin user for all servers
 port: 2222                      # Company standard SSH port
 password: company_default_pass   # Default password for password-auth servers
 ssh_binary: ssh                 # Standard SSH client
-cache_schedule: "0 8 * * *"     # Daily cache updates at 8 AM
 auth:                           # Company API token for remote configs
   token: company_access_token
+
+features:
+  cache_schedule: "0 8 * * *"     # Daily cache updates at 8 AM
+  allow_web_imports: true         # Allow remote configuration imports
 
 groups:
   - name: Production
@@ -431,9 +480,12 @@ For complex setups, you can split your configuration across multiple files and i
 # Main config file - define only what you want to standardize globally
 user: company-admin     # Optional: only if you want a default user
 password: company_pass  # Optional: only if you want a default password
-cache_schedule: "0 8 * * *"  # Optional: daily updates at 8 AM
 auth:                   # Optional: only if you use authenticated remote imports
   token: company_access_token
+
+features:
+  cache_schedule: "0 8 * * *"  # Optional: daily updates at 8 AM
+  allow_web_imports: true      # Allow remote configuration imports
 
 imports:
   - file: ~/.sasha/production-servers.yaml
@@ -497,11 +549,14 @@ Using version control for your configuration files allows you to track infrastru
 
 #### Remote Imports and Caching
 
-SaSHa supports importing configurations from remote URLs, allowing teams to share server configurations from central repositories:
+SaSHa supports importing configurations from remote URLs, allowing teams to share server configurations from central repositories. Remote imports can be controlled via the `allow_web_imports` feature flag:
 
 ```yaml
-# Global auth and cache schedule used by all remote imports unless overridden
-cache_schedule: "0 9 * * *"  # Daily updates at 9 AM
+features:
+  allow_web_imports: true      # Enable remote HTTP/HTTPS imports
+  cache_schedule: "0 9 * * *"  # Daily updates at 9 AM
+
+# Global auth used by all remote imports unless overridden
 auth:
   token: company_access_token
 
@@ -519,12 +574,16 @@ imports:
       # header: Authorization  # Optional, defaults to "Authorization"
 ```
 
+**Security Note**: When `allow_web_imports` is set to `false` (default), all HTTP/HTTPS imports will be blocked with a clear error message, while local file imports continue to work normally. This provides granular security control over remote configuration access.
+
 Remote imports are cached locally to improve performance and allow offline use. The cache is updated based on the cron schedule you configure:
 
 ```yaml
-# Global cache settings
-cache_schedule: "0 */12 * * *"  # Update every 12 hours
-no_cache: false                 # Global caching behavior
+features:
+  cache_schedule: "0 */12 * * *"  # Update every 12 hours
+
+# Global caching behavior
+no_cache: false                 
 
 groups:
   - name: Dynamic Config
@@ -629,26 +688,28 @@ SaSHa automatically maintains a history of your connections. You can access it b
 - Path to the server in your group hierarchy
 - Timestamp of the connection
 
-The history size can be configured in the configuration file:
+The history size can be configured in the features section:
 
 ```yaml
-# Store up to 20 history entries
-history_size: 20
+features:
+  # Store up to 20 history entries
+  history_size: 20
 
-# Disable history
-# history_size: 0
+  # Disable history
+  # history_size: 0
 ```
 
 You can mark servers as favorites for quick access. To toggle a server's favorite status, select it and press `f`. Access all of your favorites by pressing `Tab`.
 
-Enable or disable the favorites feature in the configuration file:
+Enable or disable the favorites feature in the features section:
 
 ```yaml
-# Enable favorites
-favorites_enabled: true
+features:
+  # Enable favorites
+  favorites_enabled: true
 
-# Disable favorites
-# favorites_enabled: false
+  # Disable favorites
+  # favorites_enabled: false
 ```
 
 ## Usage
