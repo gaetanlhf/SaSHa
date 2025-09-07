@@ -21,6 +21,10 @@ func loadConfig(path string) (Config, error) {
 
 	applyGlobalSettings(&config)
 
+	if config.Features == nil {
+		config.Features = &Features{}
+	}
+
 	importErr := ProcessImports(&config, path)
 
 	if importErr != nil && len(config.Groups) == 0 && len(config.Hosts) == 0 {

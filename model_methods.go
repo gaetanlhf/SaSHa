@@ -27,7 +27,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			case key.Matches(msg, m.keys.Enter):
 				m.inErrorView = false
-				m.keys = newKeyMap(m.config.HistorySize > 0, m.config.FavoritesEnabled, false)
+				m.keys = newKeyMap(m.config.Features.HistorySize > 0, m.config.Features.FavoritesEnabled, false)
 				delegate := NewColoredDelegate()
 				delegate.currentColor = "#FFFFFF"
 				m.list.SetDelegate(delegate)

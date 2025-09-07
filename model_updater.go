@@ -83,7 +83,7 @@ func (m *model) updateListItems() {
 	var items []list.Item
 
 	if m.inHistoryView {
-		if m.config.HistorySize == 0 {
+		if m.config.Features.HistorySize == 0 {
 			m.inHistoryView = false
 			m.updateColorBasedOnCurrentPath()
 			m.updateListItems()
@@ -99,7 +99,7 @@ func (m *model) updateListItems() {
 	}
 
 	if m.inFavoritesView {
-		if !m.config.FavoritesEnabled {
+		if !m.config.Features.FavoritesEnabled {
 			m.inFavoritesView = false
 			m.updateColorBasedOnCurrentPath()
 			m.updateListItems()
@@ -133,7 +133,7 @@ func (m *model) updateListItems() {
 				}
 
 				favoriteStatus := false
-				if m.config.FavoritesEnabled {
+				if m.config.Features.FavoritesEnabled {
 					favoriteStatus = isServerFavorited(server, m.favoritesData)
 				}
 
@@ -218,7 +218,7 @@ func (m *model) updateListItems() {
 				}
 
 				favoriteStatus := false
-				if m.config.FavoritesEnabled {
+				if m.config.Features.FavoritesEnabled {
 					favoriteStatus = isServerFavorited(server, m.favoritesData)
 				}
 
@@ -245,7 +245,7 @@ func (m *model) updateListItems() {
 }
 
 func (m *model) toggleHistoryView() {
-	if m.config.HistorySize == 0 {
+	if m.config.Features.HistorySize == 0 {
 		return
 	}
 
@@ -266,7 +266,7 @@ func (m *model) toggleHistoryView() {
 }
 
 func (m *model) toggleFavoritesView() {
-	if !m.config.FavoritesEnabled {
+	if !m.config.Features.FavoritesEnabled {
 		return
 	}
 
@@ -287,7 +287,7 @@ func (m *model) toggleFavoritesView() {
 }
 
 func (m *model) toggleCurrentServerFavorite() {
-	if !m.config.FavoritesEnabled {
+	if !m.config.Features.FavoritesEnabled {
 		return
 	}
 

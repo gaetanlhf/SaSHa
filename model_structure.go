@@ -31,11 +31,11 @@ type model struct {
 
 func initialModel(config Config) model {
 	historyEnabled := true
-	if config.HistorySize == 0 {
+	if config.Features.HistorySize == 0 {
 		historyEnabled = false
 		clearHistory()
-	} else if config.HistorySize < 0 {
-		config.HistorySize = 20
+	} else if config.Features.HistorySize < 0 {
+		config.Features.HistorySize = 20
 	}
 
 	currentColor := "#FFFFFF"
@@ -142,11 +142,11 @@ func initialModel(config Config) model {
 	}
 
 	var favoritesData FavoritesData
-	if config.FavoritesEnabled {
+	if config.Features.FavoritesEnabled {
 		favoritesData, _ = loadFavorites()
 	}
 
-	keys := newKeyMap(historyEnabled, config.FavoritesEnabled, inErrorView)
+	keys := newKeyMap(historyEnabled, config.Features.FavoritesEnabled, inErrorView)
 
 	var breadcrumbColors []string
 	if startInGroup && !inErrorView {

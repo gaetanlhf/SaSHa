@@ -731,7 +731,7 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 	}
 
 	if isURL(resolvedPath) {
-		importData, usingExpiredCache, err = readRemoteFile(resolvedPath, config.CacheSchedule, directive.NoCache, directive.Auth)
+		importData, usingExpiredCache, err = readRemoteFile(resolvedPath, config.Features.CacheSchedule, directive.NoCache, directive.Auth)
 		if err != nil && !usingExpiredCache {
 			errMsg := fmt.Sprintf("Failed to read import file %s: %v", filePath, err)
 			return fmt.Errorf(errMsg)

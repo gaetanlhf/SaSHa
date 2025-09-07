@@ -47,7 +47,7 @@ func buildHistoryItems(historyData HistoryData, config Config, favoritesData Fav
 		}
 
 		favoriteStatus := false
-		if config.FavoritesEnabled {
+		if config.Features.FavoritesEnabled {
 			favoriteStatus = isServerFavorited(&entry.Server, favoritesData)
 		}
 

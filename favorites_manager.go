@@ -67,7 +67,7 @@ func clearFavorites() error {
 }
 
 func addToFavorites(server *Server, path []string, config *Config) error {
-	if !config.FavoritesEnabled {
+	if !config.Features.FavoritesEnabled {
 		return nil
 	}
 

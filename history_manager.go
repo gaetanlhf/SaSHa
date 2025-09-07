@@ -69,7 +69,7 @@ func clearHistory() error {
 }
 
 func addToHistory(server *Server, path []string, config *Config) error {
-	historySize := config.HistorySize
+	historySize := config.Features.HistorySize
 	if historySize == 0 {
 		return nil
 	}
