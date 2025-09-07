@@ -731,6 +731,10 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 	}
 
 	if isURL(resolvedPath) {
+		if !config.Features.AllowWebImports {
+			errMsg := fmt.Sprintf("Web imports disabled - cannot import %s", filePath)
+			return fmt.Errorf(errMsg)
+		}
 		importData, usingExpiredCache, err = readRemoteFile(resolvedPath, config.Features.CacheSchedule, directive.NoCache, directive.Auth)
 		if err != nil && !usingExpiredCache {
 			errMsg := fmt.Sprintf("Failed to read import file %s: %v", filePath, err)

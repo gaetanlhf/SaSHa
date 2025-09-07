@@ -26,6 +26,11 @@ func classifyError(errMsg string) ErrorInfo {
 	}
 
 	switch {
+	case strings.Contains(errLower, "web imports disabled"):
+		errorInfo.Emoji = "🚫"
+		errorInfo.Color = "#FF6B6B"
+		errorInfo.Message = fmt.Sprintf("Web imports disabled: %s", displayMsg)
+		
 	case strings.Contains(errLower, "no such host") || strings.Contains(errLower, "host not found") ||
 		strings.Contains(errLower, "dns") || strings.Contains(errLower, "name resolution"):
 		errorInfo.Emoji = "🌐"

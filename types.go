@@ -8,6 +8,7 @@ type Features struct {
 	HistorySize      int    `yaml:"history_size,omitempty"`
 	FavoritesEnabled bool   `yaml:"favorites_enabled,omitempty"`
 	CacheSchedule    string `yaml:"cache_schedule,omitempty"`
+	AllowWebImports  bool   `yaml:"allow_web_imports,omitempty"`
 }
 
 type Config struct {
