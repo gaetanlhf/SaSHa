@@ -26,18 +26,10 @@ func buildFavoritesItems(favoritesData FavoritesData, config Config) []list.Item
 
 		pathColors := getPathColors(config, entry.Path)
 
-		extraInfo := ""
-		if entry.Server.SSHBinary != nil && *entry.Server.SSHBinary != "" && *entry.Server.SSHBinary != "ssh" {
-			extraInfo = fmt.Sprintf("SSH Client: %s", *entry.Server.SSHBinary)
-		}
-
 		var descLines []string
 		descLines = append(descLines, connDetails)
 		if pathLine != "" {
 			descLines = append(descLines, pathLine)
-		}
-		if extraInfo != "" {
-			descLines = append(descLines, extraInfo)
 		}
 
 		description := strings.Join(descLines, "\n")

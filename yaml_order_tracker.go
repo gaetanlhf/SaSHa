@@ -51,6 +51,11 @@ func (ot *OrderTracker) extractPositions(node *yaml.Node, parentPath string) {
 		keyNode := node.Content[i]
 		valueNode := node.Content[i+1]
 
+		if keyNode.Value == "inventory" && valueNode.Kind == yaml.MappingNode {
+			ot.extractPositions(valueNode, parentPath)
+			continue
+		}
+
 		switch keyNode.Value {
 		case "imports":
 			if valueNode.Kind == yaml.SequenceNode {
@@ -107,7 +112,6 @@ func (ot *OrderTracker) extractPositions(node *yaml.Node, parentPath string) {
 
 	ot.positions[parentPath] = positions
 }
-
 func extractNameFromNode(node *yaml.Node) string {
 	if node.Kind != yaml.MappingNode {
 		return ""
