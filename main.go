@@ -136,12 +136,16 @@ func forceCleanCache() error {
 }
 
 func filterConfigByGroups(config Config, filterTopLevelGroups []string) (Config, error) {
+	if config.Inventory == nil {
+		return config, fmt.Errorf("no inventory defined")
+	}
+
 	var filteredGroups []*Group
 	var foundGroups []string
 
 	for _, groupName := range filterTopLevelGroups {
 		found := false
-		for _, group := range config.Groups {
+		for _, group := range config.Inventory.Groups {
 			if group.Name == groupName {
 				filteredGroups = append(filteredGroups, group)
 				foundGroups = append(foundGroups, groupName)
@@ -155,7 +159,7 @@ func filterConfigByGroups(config Config, filterTopLevelGroups []string) (Config,
 	}
 
 	filteredConfig := config
-	filteredConfig.Groups = filteredGroups
+	filteredConfig.Inventory.Groups = filteredGroups
 
 	return filteredConfig, nil
 }

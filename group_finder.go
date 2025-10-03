@@ -5,13 +5,17 @@ import (
 )
 
 func findGroupByPath(config *Config, path string) *Group {
+	if config.Inventory == nil {
+		return nil
+	}
+
 	parts := strings.Split(path, "/")
 	if len(parts) == 0 {
 		return nil
 	}
 
 	var currentGroup *Group
-	for _, group := range config.Groups {
+	for _, group := range config.Inventory.Groups {
 		if group.Name == parts[0] {
 			currentGroup = group
 			break
@@ -40,12 +44,16 @@ func findGroupByPath(config *Config, path string) *Group {
 }
 
 func findGroupByPathSlice(config *Config, path []string) *Group {
+	if config.Inventory == nil {
+		return nil
+	}
+
 	if len(path) == 0 {
 		return nil
 	}
 
 	var currentGroup *Group
-	for _, group := range config.Groups {
+	for _, group := range config.Inventory.Groups {
 		if group.Name == path[0] {
 			currentGroup = group
 			break
@@ -76,8 +84,8 @@ func findGroupByPathSlice(config *Config, path []string) *Group {
 func resolveEffectiveColor(config *Config, path []string) string {
 	defaultColor := "#FFFFFF"
 
-	if config.Color != nil && *config.Color != "" {
-		defaultColor = *config.Color
+	if config.Inventory != nil && config.Inventory.Color != nil && *config.Inventory.Color != "" {
+		defaultColor = *config.Inventory.Color
 	}
 
 	if len(path) == 0 {

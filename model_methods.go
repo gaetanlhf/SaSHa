@@ -34,8 +34,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.updateColorBasedOnCurrentPath()
 				m.updateListItems()
 				m.list.Select(0)
-				if m.startInGroup && len(m.config.Groups) == 1 && len(m.config.Hosts) == 0 {
-					singleGroup := m.config.Groups[0]
+				if m.startInGroup && m.config.Inventory != nil && len(m.config.Inventory.Groups) == 1 && len(m.config.Inventory.Hosts) == 0 {
+					singleGroup := m.config.Inventory.Groups[0]
 					m.currentPath = []string{singleGroup.Name}
 					if singleGroup.Color != nil && *singleGroup.Color != "" {
 						m.currentColor = *singleGroup.Color

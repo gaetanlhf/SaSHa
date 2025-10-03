@@ -27,7 +27,7 @@ func loadConfig(path string) (Config, error) {
 
 	importErr := ProcessImports(&config, path)
 
-	if importErr != nil && len(config.Groups) == 0 && len(config.Hosts) == 0 {
+	if importErr != nil && (config.Inventory == nil || (len(config.Inventory.Groups) == 0 && len(config.Inventory.Hosts) == 0)) {
 		return config, fmt.Errorf("failed to process imports: %w", importErr)
 	}
 

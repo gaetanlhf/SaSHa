@@ -58,7 +58,7 @@ func initialModel(config Config) model {
 	l.FilterInput.TextStyle = filterTextStyle
 	l.FilterInput.Cursor.Style = filterCursorStyle
 
-	startInGroup := len(config.Groups) == 1 && len(config.Hosts) == 0
+	startInGroup := config.Inventory != nil && len(config.Inventory.Groups) == 1 && len(config.Inventory.Hosts) == 0
 	var initialPath []string
 	var items []list.Item
 	inErrorView := len(config.ImportErrors) > 0
@@ -68,7 +68,7 @@ func initialModel(config Config) model {
 		errorDelegate := newErrorDelegate()
 		l.SetDelegate(errorDelegate)
 	} else if startInGroup {
-		singleGroup := config.Groups[0]
+		singleGroup := config.Inventory.Groups[0]
 		initialPath = []string{singleGroup.Name}
 
 		currentColor = resolveEffectiveColor(&config, initialPath)
@@ -100,30 +100,32 @@ func initialModel(config Config) model {
 			})
 		}
 	} else {
-		items = buildGroupItems(config.Groups, []string{}, &config)
-		for _, server := range config.Hosts {
-			if server.Group == "" {
-				desc := server.Host
-				if server.User != nil && *server.User != "" {
-					desc = fmt.Sprintf("%s@%s", *server.User, server.Host)
-				}
-				if server.Port != nil && *server.Port != 0 && *server.Port != 22 {
-					desc = fmt.Sprintf("%s:%d", desc, *server.Port)
-				}
+		if config.Inventory != nil {
+			items = buildGroupItems(config.Inventory.Groups, []string{}, &config)
+			for _, server := range config.Inventory.Hosts {
+				if server.Group == "" {
+					desc := server.Host
+					if server.User != nil && *server.User != "" {
+						desc = fmt.Sprintf("%s@%s", *server.User, server.Host)
+					}
+					if server.Port != nil && *server.Port != 0 && *server.Port != 22 {
+						desc = fmt.Sprintf("%s:%d", desc, *server.Port)
+					}
 
-				serverColor := resolveEffectiveColor(&config, []string{})
-				if server.Color != nil && *server.Color != "" {
-					serverColor = *server.Color
-				}
+					serverColor := resolveEffectiveColor(&config, []string{})
+					if server.Color != nil && *server.Color != "" {
+						serverColor = *server.Color
+					}
 
-				items = append(items, item{
-					title:       fmt.Sprintf("💻 %s", server.Name),
-					description: desc,
-					isGroup:     false,
-					path:        "",
-					color:       serverColor,
-					isMultiline: false,
-				})
+					items = append(items, item{
+						title:       fmt.Sprintf("💻 %s", server.Name),
+						description: desc,
+						isGroup:     false,
+						path:        "",
+						color:       serverColor,
+						isMultiline: false,
+					})
+				}
 			}
 		}
 	}

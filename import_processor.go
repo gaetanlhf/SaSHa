@@ -54,7 +54,11 @@ func dedupErrors(errors []string) []string {
 func collectImportDirectives(config *Config) []ImportDirective {
 	var directives []ImportDirective
 
-	imports := getImportsFromConfig(config)
+	if config.Inventory == nil {
+		return directives
+	}
+
+	imports := getImportsFromInventory(config.Inventory)
 
 	for i := range imports {
 		applyGlobalSettingsToDirective(config, &imports[i])
@@ -62,7 +66,7 @@ func collectImportDirectives(config *Config) []ImportDirective {
 
 	directives = append(directives, imports...)
 
-	for _, group := range config.Groups {
+	for _, group := range config.Inventory.Groups {
 		applyGlobalSettingsToGroup(config, group)
 
 		groupImports := collectImportDirectivesFromGroup(group, "")
@@ -73,59 +77,69 @@ func collectImportDirectives(config *Config) []ImportDirective {
 }
 
 func applyGlobalSettings(config *Config) {
-	for _, server := range config.Hosts {
+	if config.Inventory == nil {
+		return
+	}
+
+	for _, server := range config.Inventory.Hosts {
 		applyGlobalSettingsToServer(config, server)
 	}
 
-	for _, group := range config.Groups {
+	for _, group := range config.Inventory.Groups {
 		applyGlobalSettingsToGroup(config, group)
 	}
 }
 
 func applyGlobalSettingsToDirective(config *Config, directive *ImportDirective) {
-	if directive.User == nil && config.User != nil {
-		directive.User = config.User
+	if config.Inventory == nil {
+		return
 	}
-	if directive.Port == nil && config.Port != nil {
-		directive.Port = config.Port
+	if directive.User == nil && config.Inventory.User != nil {
+		directive.User = config.Inventory.User
 	}
-	if directive.Password == nil && config.Password != nil {
-		directive.Password = config.Password
+	if directive.Port == nil && config.Inventory.Port != nil {
+		directive.Port = config.Inventory.Port
 	}
-	if directive.SSHBinary == nil && config.SSHBinary != nil {
-		directive.SSHBinary = config.SSHBinary
+	if directive.Password == nil && config.Inventory.Password != nil {
+		directive.Password = config.Inventory.Password
 	}
-	if len(directive.ExtraArgs) == 0 && len(config.ExtraArgs) > 0 {
-		directive.ExtraArgs = append([]string{}, config.ExtraArgs...)
+	if directive.SSHBinary == nil && config.Inventory.SSHBinary != nil {
+		directive.SSHBinary = config.Inventory.SSHBinary
 	}
-	if directive.Auth == nil && config.Auth != nil {
-		directive.Auth = config.Auth
+	if len(directive.ExtraArgs) == 0 && len(config.Inventory.ExtraArgs) > 0 {
+		directive.ExtraArgs = append([]string{}, config.Inventory.ExtraArgs...)
 	}
-	if config.NoCache {
+	if directive.Auth == nil && config.Inventory.Auth != nil {
+		directive.Auth = config.Inventory.Auth
+	}
+	if config.Inventory.NoCache {
 		directive.NoCache = true
 	}
 }
 
 func applyGlobalSettingsToGroup(config *Config, group *Group) {
-	if group.User == nil && config.User != nil {
-		group.User = config.User
+	if config.Inventory == nil {
+		return
 	}
-	if group.Port == nil && config.Port != nil {
-		group.Port = config.Port
+	if group.User == nil && config.Inventory.User != nil {
+		group.User = config.Inventory.User
 	}
-	if group.Password == nil && config.Password != nil {
-		group.Password = config.Password
+	if group.Port == nil && config.Inventory.Port != nil {
+		group.Port = config.Inventory.Port
 	}
-	if group.SSHBinary == nil && config.SSHBinary != nil {
-		group.SSHBinary = config.SSHBinary
+	if group.Password == nil && config.Inventory.Password != nil {
+		group.Password = config.Inventory.Password
 	}
-	if len(group.ExtraArgs) == 0 && len(config.ExtraArgs) > 0 {
-		group.ExtraArgs = append([]string{}, config.ExtraArgs...)
+	if group.SSHBinary == nil && config.Inventory.SSHBinary != nil {
+		group.SSHBinary = config.Inventory.SSHBinary
 	}
-	if group.Auth == nil && config.Auth != nil {
-		group.Auth = config.Auth
+	if len(group.ExtraArgs) == 0 && len(config.Inventory.ExtraArgs) > 0 {
+		group.ExtraArgs = append([]string{}, config.Inventory.ExtraArgs...)
 	}
-	if config.NoCache {
+	if group.Auth == nil && config.Inventory.Auth != nil {
+		group.Auth = config.Inventory.Auth
+	}
+	if config.Inventory.NoCache {
 		group.NoCache = true
 	}
 
@@ -139,20 +153,23 @@ func applyGlobalSettingsToGroup(config *Config, group *Group) {
 }
 
 func applyGlobalSettingsToServer(config *Config, server *Server) {
-	if server.User == nil && config.User != nil {
-		server.User = config.User
+	if config.Inventory == nil {
+		return
 	}
-	if server.Port == nil && config.Port != nil {
-		server.Port = config.Port
+	if server.User == nil && config.Inventory.User != nil {
+		server.User = config.Inventory.User
 	}
-	if server.Password == nil && config.Password != nil {
-		server.Password = config.Password
+	if server.Port == nil && config.Inventory.Port != nil {
+		server.Port = config.Inventory.Port
 	}
-	if server.SSHBinary == nil && config.SSHBinary != nil {
-		server.SSHBinary = config.SSHBinary
+	if server.Password == nil && config.Inventory.Password != nil {
+		server.Password = config.Inventory.Password
 	}
-	if len(server.ExtraArgs) == 0 && len(config.ExtraArgs) > 0 {
-		server.ExtraArgs = append([]string{}, config.ExtraArgs...)
+	if server.SSHBinary == nil && config.Inventory.SSHBinary != nil {
+		server.SSHBinary = config.Inventory.SSHBinary
+	}
+	if len(server.ExtraArgs) == 0 && len(config.Inventory.ExtraArgs) > 0 {
+		server.ExtraArgs = append([]string{}, config.Inventory.ExtraArgs...)
 	}
 }
 
@@ -216,10 +233,10 @@ func collectImportDirectivesFromGroup(group *Group, path string) []ImportDirecti
 	return directives
 }
 
-func getImportsFromConfig(config *Config) []ImportDirective {
+func getImportsFromInventory(inventory *Inventory) []ImportDirective {
 	var importConfig ImportConfig
 
-	data, err := yaml.Marshal(config)
+	data, err := yaml.Marshal(inventory)
 	if err != nil {
 		return nil
 	}
@@ -267,6 +284,10 @@ func getGroupAuth(group *Group) *AuthConfig {
 }
 
 func getGroupInheritedSettings(config *Config, path string) inheritedSettings {
+	if config.Inventory == nil {
+		return inheritedSettings{}
+	}
+
 	parts := strings.Split(path, "/")
 	if len(parts) == 0 {
 		return inheritedSettings{}
@@ -275,7 +296,7 @@ func getGroupInheritedSettings(config *Config, path string) inheritedSettings {
 	var settings inheritedSettings
 	var currentGroup *Group
 
-	for _, group := range config.Groups {
+	for _, group := range config.Inventory.Groups {
 		if group.Name == parts[0] {
 			currentGroup = group
 			break
@@ -778,8 +799,8 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 
 	if directive.Path == "" {
 		applyDirectiveSettings(&importData, directive)
-		config.Groups = mergeWithYAMLOrder(config.Groups, importData.Groups, "", orderTracker)
-		config.Hosts = mergeWithYAMLOrder(config.Hosts, importData.Hosts, "", orderTracker)
+		config.Inventory.Groups = mergeWithYAMLOrder(config.Inventory.Groups, importData.Groups, "", orderTracker)
+		config.Inventory.Hosts = mergeWithYAMLOrder(config.Inventory.Hosts, importData.Hosts, "", orderTracker)
 	} else {
 		targetGroup := findGroupByPath(config, directive.Path)
 		if targetGroup == nil {

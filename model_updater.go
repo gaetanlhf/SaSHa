@@ -102,9 +102,9 @@ func (m *model) updateListItems() {
 	}
 
 	if len(m.currentPath) == 0 {
-		items = buildGroupItems(m.config.Groups, []string{}, &m.config)
+		items = buildGroupItems(m.config.Inventory.Groups, []string{}, &m.config)
 
-		for _, server := range m.config.Hosts {
+		for _, server := range m.config.Inventory.Hosts {
 			if server.Group == "" {
 				desc := server.Host
 				if server.User != nil && *server.User != "" {
@@ -331,9 +331,11 @@ func (m *model) findServer(serverName string) *Server {
 		return nil
 	}
 
-	for _, server := range m.config.Hosts {
-		if server.Name == serverName {
-			return server
+	if m.config.Inventory != nil {
+		for _, server := range m.config.Inventory.Hosts {
+			if server.Name == serverName {
+				return server
+			}
 		}
 	}
 

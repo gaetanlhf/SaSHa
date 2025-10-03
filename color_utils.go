@@ -34,7 +34,7 @@ func getPathColors(config Config, path []string) []string {
 	}
 
 	var currentGroup *Group
-	for _, group := range config.Groups {
+	for _, group := range config.Inventory.Groups {
 		if group.Name == path[0] {
 			currentGroup = group
 			if group.Color != nil && *group.Color != "" {

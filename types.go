@@ -4,27 +4,30 @@ import (
 	"time"
 )
 
+type Config struct {
+	Inventory    *Inventory `yaml:"inventory,omitempty"`
+	Features     *Features  `yaml:"features,omitempty"`
+	ImportErrors []string   `yaml:"-"`
+}
+
+type Inventory struct {
+	User      *string     `yaml:"user,omitempty"`
+	Port      *int        `yaml:"port,omitempty"`
+	Password  *string     `yaml:"password,omitempty"`
+	SSHBinary *string     `yaml:"ssh_binary,omitempty"`
+	ExtraArgs []string    `yaml:"extra_args,omitempty"`
+	Color     *string     `yaml:"color,omitempty"`
+	NoCache   bool        `yaml:"no_cache,omitempty"`
+	Auth      *AuthConfig `yaml:"auth,omitempty"`
+	Groups    []*Group    `yaml:"groups,omitempty"`
+	Hosts     []*Server   `yaml:"hosts,omitempty"`
+}
+
 type Features struct {
 	HistorySize      int    `yaml:"history_size,omitempty"`
 	FavoritesEnabled bool   `yaml:"favorites_enabled,omitempty"`
 	CacheSchedule    string `yaml:"cache_schedule,omitempty"`
 	AllowWebImports  bool   `yaml:"allow_web_imports,omitempty"`
-}
-
-type Config struct {
-	User         *string           `yaml:"user,omitempty"`
-	Port         *int              `yaml:"port,omitempty"`
-	Password     *string           `yaml:"password,omitempty"`
-	SSHBinary    *string           `yaml:"ssh_binary,omitempty"`
-	Color        *string           `yaml:"color,omitempty"`
-	ExtraArgs    []string          `yaml:"extra_args,omitempty"`
-	NoCache      bool              `yaml:"no_cache,omitempty"`
-	Features     *Features         `yaml:"features,omitempty"`
-	Groups       []*Group          `yaml:"groups,omitempty"`
-	Hosts        []*Server         `yaml:"hosts,omitempty"`
-	Imports      []ImportDirective `yaml:"imports,omitempty"`
-	ImportErrors []string          `yaml:"-"`
-	Auth         *AuthConfig       `yaml:"auth,omitempty"`
 }
 
 type Server struct {

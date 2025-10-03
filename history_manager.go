@@ -127,12 +127,16 @@ func filterHistoryByExistingServers(historyData HistoryData, config *Config) His
 func getAllServersFromConfig(config *Config) map[string]struct{} {
 	serverMap := make(map[string]struct{})
 
-	for _, server := range config.Hosts {
+	if config.Inventory == nil {
+		return serverMap
+	}
+
+	for _, server := range config.Inventory.Hosts {
 		key := server.Name + ":" + server.Host
 		serverMap[key] = struct{}{}
 	}
 
-	for _, group := range config.Groups {
+	for _, group := range config.Inventory.Groups {
 		collectServersFromGroup(group, serverMap)
 	}
 
@@ -144,7 +148,11 @@ func getAllValidPathsFromConfig(config *Config) [][]string {
 
 	paths = append(paths, []string{})
 
-	for _, group := range config.Groups {
+	if config.Inventory == nil {
+		return paths
+	}
+
+	for _, group := range config.Inventory.Groups {
 		collectPathsFromGroup(group, []string{}, &paths)
 	}
 

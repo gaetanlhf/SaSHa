@@ -41,30 +41,38 @@ func getInheritedGroupSettings(group *Group) inheritedSettings {
 }
 
 func propagateInheritedSettings(config *Config) {
+	if config.Inventory == nil {
+		return
+	}
+
 	var globalAuth *AuthConfig
-	configImports := getImportsFromConfig(config)
-	for _, imp := range configImports {
-		if imp.Auth != nil {
-			globalAuth = imp.Auth
-			break
+	if config.Inventory.Auth != nil {
+		globalAuth = config.Inventory.Auth
+	} else {
+		configImports := getImportsFromInventory(config.Inventory)
+		for _, imp := range configImports {
+			if imp.Auth != nil {
+				globalAuth = imp.Auth
+				break
+			}
 		}
 	}
 
-	for _, group := range config.Groups {
+	for _, group := range config.Inventory.Groups {
 		propagateGroupSettings(group, inheritedSettings{
-			User:      config.User,
-			Port:      config.Port,
-			Password:  config.Password,
-			SSHBinary: config.SSHBinary,
-			ExtraArgs: config.ExtraArgs,
-			NoCache:   config.NoCache,
+			User:      config.Inventory.User,
+			Port:      config.Inventory.Port,
+			Password:  config.Inventory.Password,
+			SSHBinary: config.Inventory.SSHBinary,
+			ExtraArgs: config.Inventory.ExtraArgs,
+			NoCache:   config.Inventory.NoCache,
 			Auth:      globalAuth,
 		})
 	}
 
-	imports := getImportsFromConfig(config)
+	imports := getImportsFromInventory(config.Inventory)
 	if len(imports) > 0 {
-		for _, group := range config.Groups {
+		for _, group := range config.Inventory.Groups {
 			for _, imp := range imports {
 				if imp.Path == "" || imp.Path == group.Name {
 					propagateImportSettings(group, imp)
