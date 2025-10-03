@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"github.com/charmbracelet/lipgloss"
@@ -22,6 +22,7 @@ var (
 	filterTextStyle   lipgloss.Style
 	filterCursorStyle lipgloss.Style
 	filterPromptStyle lipgloss.Style
+	version           string
 )
 
 func initStyles(baseColor string) {
@@ -40,4 +41,8 @@ func initStyles(baseColor string) {
 	filterCursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(baseColor))
 
 	appStyle = appStyle.BorderForeground(lipgloss.Color("#626262"))
+}
+
+func SetVersion(v string) {
+	version = v
 }

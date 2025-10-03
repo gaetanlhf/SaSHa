@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"strings"
@@ -69,4 +69,11 @@ func truncateText(text string, maxWidth int) string {
 	}
 
 	return truncate.StringWithTail(text, uint(maxWidth), "...")
+}
+func TruncateText(text string, maxWidth int) string {
+	return truncateText(text, maxWidth)
+}
+
+func TruncateBreadcrumb(breadcrumb string, maxWidth int) string {
+	return truncateBreadcrumb(breadcrumb, maxWidth)
 }

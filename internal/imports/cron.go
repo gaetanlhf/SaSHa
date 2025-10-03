@@ -1,4 +1,4 @@
-package main
+package imports
 
 import (
 	"github.com/robfig/cron/v3"

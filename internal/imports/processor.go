@@ -1,4 +1,4 @@
-package main
+package imports
 
 import (
 	"fmt"
@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gaetanlhf/sasha/internal/config"
+	"github.com/gaetanlhf/sasha/internal/utils"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,55 +22,59 @@ func init() {
 	cacheManager = NewCacheManager()
 }
 
-func cleanErrorMsg(err string) string {
-	err = strings.TrimSpace(err)
+type inheritedSettings struct {
+	User      *string
+	Port      *int
+	Password  *string
+	ExtraArgs []string
+	SSHBinary *string
+	Color     *string
+	NoCache   bool
+	Auth      *config.AuthConfig
+}
 
-	if strings.Contains(err, "Import error for") {
-		parts := strings.SplitN(err, "Import error for", 2)
-		if len(parts) > 1 {
-			err = strings.TrimSpace(parts[1])
+func Process(cfg *config.Config, configPath string) error {
+	orderTracker = LoadOrderTracker(configPath)
+
+	importDirectives := collectImportDirectives(cfg)
+
+	cfg.ImportErrors = []string{}
+
+	if len(importDirectives) > 0 {
+		utils.UpdateSpinnerMessage("Processing imports")
+		for _, directive := range importDirectives {
+			err := processImport(directive, cfg, configPath)
+			if err != nil && !strings.Contains(err.Error(), "[EXPIRED_CACHE]") {
+				cfg.ImportErrors = append(cfg.ImportErrors, err.Error())
+			}
 		}
 	}
 
-	err = strings.Replace(err, "Failed to read import file ", "", 1)
+	utils.UpdateSpinnerMessage("Applying inherited settings")
+	config.PropagateInheritedSettings(cfg)
 
-	return err
-}
-
-func dedupErrors(errors []string) []string {
-	seen := make(map[string]bool)
-	result := []string{}
-
-	for _, err := range errors {
-		cleanedErr := cleanErrorMsg(err)
-
-		if !seen[cleanedErr] {
-			seen[cleanedErr] = true
-			result = append(result, err)
-		}
+	if len(cfg.ImportErrors) > 0 {
+		return fmt.Errorf("import errors occurred")
 	}
-
-	return result
+	return nil
 }
 
-func collectImportDirectives(config *Config) []ImportDirective {
-	var directives []ImportDirective
+func collectImportDirectives(cfg *config.Config) []config.ImportDirective {
+	var directives []config.ImportDirective
 
-	if config.Inventory == nil {
+	if cfg.Inventory == nil {
 		return directives
 	}
 
-	imports := getImportsFromInventory(config.Inventory)
+	imports := config.GetImportsFromInventory(cfg.Inventory)
 
 	for i := range imports {
-		applyGlobalSettingsToDirective(config, &imports[i])
+		applyGlobalSettingsToDirective(cfg, &imports[i])
 	}
 
 	directives = append(directives, imports...)
 
-	for _, group := range config.Inventory.Groups {
-		applyGlobalSettingsToGroup(config, group)
-
+	for _, group := range cfg.Inventory.Groups {
 		groupImports := collectImportDirectivesFromGroup(group, "")
 		directives = append(directives, groupImports...)
 	}
@@ -76,105 +82,35 @@ func collectImportDirectives(config *Config) []ImportDirective {
 	return directives
 }
 
-func applyGlobalSettings(config *Config) {
-	if config.Inventory == nil {
+func applyGlobalSettingsToDirective(cfg *config.Config, directive *config.ImportDirective) {
+	if cfg.Inventory == nil {
 		return
 	}
-
-	for _, server := range config.Inventory.Hosts {
-		applyGlobalSettingsToServer(config, server)
+	if directive.User == nil && cfg.Inventory.User != nil {
+		directive.User = cfg.Inventory.User
 	}
-
-	for _, group := range config.Inventory.Groups {
-		applyGlobalSettingsToGroup(config, group)
+	if directive.Port == nil && cfg.Inventory.Port != nil {
+		directive.Port = cfg.Inventory.Port
 	}
-}
-
-func applyGlobalSettingsToDirective(config *Config, directive *ImportDirective) {
-	if config.Inventory == nil {
-		return
+	if directive.Password == nil && cfg.Inventory.Password != nil {
+		directive.Password = cfg.Inventory.Password
 	}
-	if directive.User == nil && config.Inventory.User != nil {
-		directive.User = config.Inventory.User
+	if directive.SSHBinary == nil && cfg.Inventory.SSHBinary != nil {
+		directive.SSHBinary = cfg.Inventory.SSHBinary
 	}
-	if directive.Port == nil && config.Inventory.Port != nil {
-		directive.Port = config.Inventory.Port
+	if len(directive.ExtraArgs) == 0 && len(cfg.Inventory.ExtraArgs) > 0 {
+		directive.ExtraArgs = append([]string{}, cfg.Inventory.ExtraArgs...)
 	}
-	if directive.Password == nil && config.Inventory.Password != nil {
-		directive.Password = config.Inventory.Password
+	if directive.Auth == nil && cfg.Inventory.Auth != nil {
+		directive.Auth = cfg.Inventory.Auth
 	}
-	if directive.SSHBinary == nil && config.Inventory.SSHBinary != nil {
-		directive.SSHBinary = config.Inventory.SSHBinary
-	}
-	if len(directive.ExtraArgs) == 0 && len(config.Inventory.ExtraArgs) > 0 {
-		directive.ExtraArgs = append([]string{}, config.Inventory.ExtraArgs...)
-	}
-	if directive.Auth == nil && config.Inventory.Auth != nil {
-		directive.Auth = config.Inventory.Auth
-	}
-	if config.Inventory.NoCache {
+	if cfg.Inventory.NoCache {
 		directive.NoCache = true
 	}
 }
 
-func applyGlobalSettingsToGroup(config *Config, group *Group) {
-	if config.Inventory == nil {
-		return
-	}
-	if group.User == nil && config.Inventory.User != nil {
-		group.User = config.Inventory.User
-	}
-	if group.Port == nil && config.Inventory.Port != nil {
-		group.Port = config.Inventory.Port
-	}
-	if group.Password == nil && config.Inventory.Password != nil {
-		group.Password = config.Inventory.Password
-	}
-	if group.SSHBinary == nil && config.Inventory.SSHBinary != nil {
-		group.SSHBinary = config.Inventory.SSHBinary
-	}
-	if len(group.ExtraArgs) == 0 && len(config.Inventory.ExtraArgs) > 0 {
-		group.ExtraArgs = append([]string{}, config.Inventory.ExtraArgs...)
-	}
-	if group.Auth == nil && config.Inventory.Auth != nil {
-		group.Auth = config.Inventory.Auth
-	}
-	if config.Inventory.NoCache {
-		group.NoCache = true
-	}
-
-	for _, server := range group.Hosts {
-		applyGlobalSettingsToServer(config, server)
-	}
-
-	for _, subgroup := range group.Groups {
-		applyGlobalSettingsToGroup(config, subgroup)
-	}
-}
-
-func applyGlobalSettingsToServer(config *Config, server *Server) {
-	if config.Inventory == nil {
-		return
-	}
-	if server.User == nil && config.Inventory.User != nil {
-		server.User = config.Inventory.User
-	}
-	if server.Port == nil && config.Inventory.Port != nil {
-		server.Port = config.Inventory.Port
-	}
-	if server.Password == nil && config.Inventory.Password != nil {
-		server.Password = config.Inventory.Password
-	}
-	if server.SSHBinary == nil && config.Inventory.SSHBinary != nil {
-		server.SSHBinary = config.Inventory.SSHBinary
-	}
-	if len(server.ExtraArgs) == 0 && len(config.Inventory.ExtraArgs) > 0 {
-		server.ExtraArgs = append([]string{}, config.Inventory.ExtraArgs...)
-	}
-}
-
-func collectImportDirectivesFromGroup(group *Group, path string) []ImportDirective {
-	var directives []ImportDirective
+func collectImportDirectivesFromGroup(group *config.Group, path string) []config.ImportDirective {
+	var directives []config.ImportDirective
 
 	currentPath := path
 	if currentPath != "" {
@@ -183,8 +119,8 @@ func collectImportDirectivesFromGroup(group *Group, path string) []ImportDirecti
 		currentPath = group.Name
 	}
 
-	imports := getImportsFromGroup(group)
-	groupAuth := getGroupAuth(group)
+	imports := config.GetImportsFromGroup(group)
+	groupAuth := config.GetGroupAuth(group)
 
 	for i := range imports {
 		if imports[i].Path == "" {
@@ -233,58 +169,8 @@ func collectImportDirectivesFromGroup(group *Group, path string) []ImportDirecti
 	return directives
 }
 
-func getImportsFromInventory(inventory *Inventory) []ImportDirective {
-	var importConfig ImportConfig
-
-	data, err := yaml.Marshal(inventory)
-	if err != nil {
-		return nil
-	}
-
-	err = yaml.Unmarshal(data, &importConfig)
-	if err != nil {
-		return nil
-	}
-
-	return importConfig.Imports
-}
-
-func getImportsFromGroup(group *Group) []ImportDirective {
-	var importConfig ImportConfig
-
-	data, err := yaml.Marshal(group)
-	if err != nil {
-		return nil
-	}
-
-	err = yaml.Unmarshal(data, &importConfig)
-	if err != nil {
-		return nil
-	}
-
-	return importConfig.Imports
-}
-
-func getGroupAuth(group *Group) *AuthConfig {
-	data, err := yaml.Marshal(group)
-	if err != nil {
-		return nil
-	}
-
-	type GroupWithAuth struct {
-		Auth *AuthConfig `yaml:"auth,omitempty"`
-	}
-
-	var groupWithAuth GroupWithAuth
-	if err := yaml.Unmarshal(data, &groupWithAuth); err != nil {
-		return nil
-	}
-
-	return groupWithAuth.Auth
-}
-
-func getGroupInheritedSettings(config *Config, path string) inheritedSettings {
-	if config.Inventory == nil {
+func getGroupInheritedSettings(cfg *config.Config, path string) inheritedSettings {
+	if cfg.Inventory == nil {
 		return inheritedSettings{}
 	}
 
@@ -294,9 +180,9 @@ func getGroupInheritedSettings(config *Config, path string) inheritedSettings {
 	}
 
 	var settings inheritedSettings
-	var currentGroup *Group
+	var currentGroup *config.Group
 
-	for _, group := range config.Inventory.Groups {
+	for _, group := range cfg.Inventory.Groups {
 		if group.Name == parts[0] {
 			currentGroup = group
 			break
@@ -317,9 +203,9 @@ func getGroupInheritedSettings(config *Config, path string) inheritedSettings {
 		settings.ExtraArgs = append([]string{}, currentGroup.ExtraArgs...)
 	}
 
-	settings.Auth = getGroupAuth(currentGroup)
+	settings.Auth = config.GetGroupAuth(currentGroup)
 
-	imports := getImportsFromGroup(currentGroup)
+	imports := config.GetImportsFromGroup(currentGroup)
 	for _, imp := range imports {
 		if imp.NoCache {
 			settings.NoCache = true
@@ -355,12 +241,12 @@ func getGroupInheritedSettings(config *Config, path string) inheritedSettings {
 					settings.NoCache = true
 				}
 
-				groupAuth := getGroupAuth(currentGroup)
+				groupAuth := config.GetGroupAuth(currentGroup)
 				if groupAuth != nil {
 					settings.Auth = groupAuth
 				}
 
-				imports := getImportsFromGroup(currentGroup)
+				imports := config.GetImportsFromGroup(currentGroup)
 				for _, imp := range imports {
 					if imp.NoCache {
 						settings.NoCache = true
@@ -377,12 +263,11 @@ func getGroupInheritedSettings(config *Config, path string) inheritedSettings {
 	return settings
 }
 
-func applyDirectiveSettingsWithInheritance(importData *ImportData, directive ImportDirective, inherited inheritedSettings) {
+func applyDirectiveSettingsWithInheritance(importData *config.ImportData, directive config.ImportDirective, inherited inheritedSettings) {
 	effectiveUser := inherited.User
 	effectivePort := inherited.Port
 	effectivePassword := inherited.Password
 	effectiveSSHBinary := inherited.SSHBinary
-	//effectiveColor := inherited.Color
 	effectiveNoCache := inherited.NoCache || directive.NoCache
 	effectiveAuth := inherited.Auth
 	effectiveExtraArgs := inherited.ExtraArgs
@@ -426,7 +311,7 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 			group.ExtraArgs = append([]string{}, effectiveExtraArgs...)
 		}
 
-		imports := getImportsFromGroup(group)
+		imports := config.GetImportsFromGroup(group)
 		for i := range imports {
 			if effectiveNoCache {
 				imports[i].NoCache = true
@@ -458,13 +343,13 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 	}
 }
 
-func applyAuthToSubgroups(group *Group, auth *AuthConfig) {
+func applyAuthToSubgroups(group *config.Group, auth *config.AuthConfig) {
 	if auth == nil {
 		return
 	}
 
 	for _, subgroup := range group.Groups {
-		imports := getImportsFromGroup(subgroup)
+		imports := config.GetImportsFromGroup(subgroup)
 		for i := range imports {
 			if imports[i].Auth == nil {
 				imports[i].Auth = auth
@@ -474,7 +359,7 @@ func applyAuthToSubgroups(group *Group, auth *AuthConfig) {
 	}
 }
 
-func applyDirectiveSettings(importData *ImportData, directive ImportDirective) {
+func applyDirectiveSettings(importData *config.ImportData, directive config.ImportDirective) {
 	for _, group := range importData.Groups {
 		if group.User == nil && directive.User != nil {
 			group.User = directive.User
@@ -495,7 +380,7 @@ func applyDirectiveSettings(importData *ImportData, directive ImportDirective) {
 			group.ExtraArgs = append([]string{}, directive.ExtraArgs...)
 		}
 
-		imports := getImportsFromGroup(group)
+		imports := config.GetImportsFromGroup(group)
 		for i := range imports {
 			if directive.NoCache {
 				imports[i].NoCache = true
@@ -529,8 +414,8 @@ func isURL(path string) bool {
 	return strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://")
 }
 
-func readRemoteFile(urlStr string, schedule string, noCache bool, auth *AuthConfig) (ImportData, bool, error) {
-	var emptyData ImportData
+func readRemoteFile(urlStr string, schedule string, noCache bool, auth *config.AuthConfig) (config.ImportData, bool, error) {
+	var emptyData config.ImportData
 
 	if !noCache && schedule != "" {
 		cachedData, needsUpdate, err := cacheManager.GetCachedData(urlStr, schedule, auth)
@@ -601,7 +486,7 @@ func readRemoteFile(urlStr string, schedule string, noCache bool, auth *AuthConf
 		return emptyData, false, fmt.Errorf("failed to read response body from %s: %w", urlStr, err)
 	}
 
-	var importData ImportData
+	var importData config.ImportData
 	if err := yaml.Unmarshal(data, &importData); err != nil {
 		if !noCache && schedule != "" {
 			cachedData, _, cacheErr := cacheManager.GetCachedData(urlStr, schedule, auth)
@@ -673,44 +558,18 @@ func resolveImportPath(importPath, basePath string) string {
 	return importPath
 }
 
-func ProcessImports(config *Config, configPath string) error {
-	orderTracker = LoadOrderTracker(configPath)
-
-	importDirectives := collectImportDirectives(config)
-
-	config.ImportErrors = []string{}
-
-	if len(importDirectives) > 0 {
-		updateSpinnerMessage("Processing imports")
-		for _, directive := range importDirectives {
-			err := processImport(directive, config, configPath)
-			if err != nil && !strings.Contains(err.Error(), "[EXPIRED_CACHE]") {
-				config.ImportErrors = append(config.ImportErrors, err.Error())
-			}
-		}
-	}
-
-	updateSpinnerMessage("Applying inherited settings")
-	propagateInheritedSettings(config)
-
-	if len(config.ImportErrors) > 0 {
-		return fmt.Errorf("import errors occurred")
-	}
-	return nil
-}
-
-func processImport(directive ImportDirective, config *Config, basePath string) error {
+func processImport(directive config.ImportDirective, cfg *config.Config, basePath string) error {
 	filePath := directive.File
 	resolvedPath := resolveImportPath(filePath, basePath)
 
-	var importData ImportData
+	var importData config.ImportData
 	var err error
 	var usingExpiredCache bool
 
 	if directive.Auth == nil && directive.Path != "" {
-		targetGroup := findGroupByPath(config, directive.Path)
+		targetGroup := utils.FindGroupByPath(cfg, directive.Path)
 		if targetGroup != nil {
-			groupAuth := getGroupAuth(targetGroup)
+			groupAuth := config.GetGroupAuth(targetGroup)
 			if groupAuth != nil {
 				directive.Auth = groupAuth
 			}
@@ -718,18 +577,18 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 	}
 
 	if !directive.NoCache && directive.Path != "" {
-		targetGroup := findGroupByPath(config, directive.Path)
+		targetGroup := utils.FindGroupByPath(cfg, directive.Path)
 		if targetGroup != nil && targetGroup.NoCache {
 			directive.NoCache = true
 		}
 	}
 
 	if isURL(resolvedPath) {
-		if !config.Features.AllowWebImports {
+		if !cfg.Features.AllowWebImports {
 			errMsg := fmt.Sprintf("Web imports disabled - cannot import %s", filePath)
 			return fmt.Errorf(errMsg)
 		}
-		importData, usingExpiredCache, err = readRemoteFile(resolvedPath, config.Features.CacheSchedule, directive.NoCache, directive.Auth)
+		importData, usingExpiredCache, err = readRemoteFile(resolvedPath, cfg.Features.CacheSchedule, directive.NoCache, directive.Auth)
 		if err != nil && !usingExpiredCache {
 			errMsg := fmt.Sprintf("Failed to read import file %s: %v", filePath, err)
 			return fmt.Errorf(errMsg)
@@ -754,11 +613,11 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 
 	if usingExpiredCache && err != nil {
 		errorMsg := fmt.Sprintf("%v [EXPIRED_CACHE]", err.Error())
-		config.ImportErrors = append(config.ImportErrors, errorMsg)
+		cfg.ImportErrors = append(cfg.ImportErrors, errorMsg)
 	}
 
 	for _, group := range importData.Groups {
-		nestedImports := getImportsFromGroup(group)
+		nestedImports := config.GetImportsFromGroup(group)
 		for _, nestedImport := range nestedImports {
 			nestedDirective := nestedImport
 
@@ -793,22 +652,22 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 				nestedDirective.Auth = directive.Auth
 			}
 
-			processImport(nestedDirective, config, resolvedPath)
+			processImport(nestedDirective, cfg, resolvedPath)
 		}
 	}
 
 	if directive.Path == "" {
 		applyDirectiveSettings(&importData, directive)
-		config.Inventory.Groups = mergeWithYAMLOrder(config.Inventory.Groups, importData.Groups, "", orderTracker)
-		config.Inventory.Hosts = mergeWithYAMLOrder(config.Inventory.Hosts, importData.Hosts, "", orderTracker)
+		cfg.Inventory.Groups = mergeWithYAMLOrder(cfg.Inventory.Groups, importData.Groups, "", orderTracker)
+		cfg.Inventory.Hosts = mergeWithYAMLOrder(cfg.Inventory.Hosts, importData.Hosts, "", orderTracker)
 	} else {
-		targetGroup := findGroupByPath(config, directive.Path)
+		targetGroup := utils.FindGroupByPath(cfg, directive.Path)
 		if targetGroup == nil {
 			errMsg := fmt.Sprintf("Import target path '%s' not found for %s", directive.Path, filePath)
 			return fmt.Errorf(errMsg)
 		}
 
-		ancestorSettings := getGroupInheritedSettings(config, directive.Path)
+		ancestorSettings := getGroupInheritedSettings(cfg, directive.Path)
 		applyDirectiveSettingsWithInheritance(&importData, directive, ancestorSettings)
 
 		targetGroup.Groups = mergeWithYAMLOrder(targetGroup.Groups, importData.Groups, directive.Path, orderTracker)

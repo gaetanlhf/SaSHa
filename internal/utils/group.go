@@ -1,11 +1,13 @@
-package main
+package utils
 
 import (
 	"strings"
+
+	"github.com/gaetanlhf/sasha/internal/config"
 )
 
-func findGroupByPath(config *Config, path string) *Group {
-	if config.Inventory == nil {
+func FindGroupByPath(cfg *config.Config, path string) *config.Group {
+	if cfg.Inventory == nil {
 		return nil
 	}
 
@@ -14,8 +16,8 @@ func findGroupByPath(config *Config, path string) *Group {
 		return nil
 	}
 
-	var currentGroup *Group
-	for _, group := range config.Inventory.Groups {
+	var currentGroup *config.Group
+	for _, group := range cfg.Inventory.Groups {
 		if group.Name == parts[0] {
 			currentGroup = group
 			break
@@ -43,8 +45,8 @@ func findGroupByPath(config *Config, path string) *Group {
 	return currentGroup
 }
 
-func findGroupByPathSlice(config *Config, path []string) *Group {
-	if config.Inventory == nil {
+func FindGroupByPathSlice(cfg *config.Config, path []string) *config.Group {
+	if cfg.Inventory == nil {
 		return nil
 	}
 
@@ -52,8 +54,8 @@ func findGroupByPathSlice(config *Config, path []string) *Group {
 		return nil
 	}
 
-	var currentGroup *Group
-	for _, group := range config.Inventory.Groups {
+	var currentGroup *config.Group
+	for _, group := range cfg.Inventory.Groups {
 		if group.Name == path[0] {
 			currentGroup = group
 			break
@@ -81,11 +83,11 @@ func findGroupByPathSlice(config *Config, path []string) *Group {
 	return currentGroup
 }
 
-func resolveEffectiveColor(config *Config, path []string) string {
+func ResolveEffectiveColor(cfg *config.Config, path []string) string {
 	defaultColor := "#FFFFFF"
 
-	if config.Inventory != nil && config.Inventory.Color != nil && *config.Inventory.Color != "" {
-		defaultColor = *config.Inventory.Color
+	if cfg.Inventory != nil && cfg.Inventory.Color != nil && *cfg.Inventory.Color != "" {
+		defaultColor = *cfg.Inventory.Color
 	}
 
 	if len(path) == 0 {
@@ -97,7 +99,7 @@ func resolveEffectiveColor(config *Config, path []string) string {
 
 	for _, part := range path {
 		pathSoFar = append(pathSoFar, part)
-		group := findGroupByPathSlice(config, pathSoFar)
+		group := FindGroupByPathSlice(cfg, pathSoFar)
 		if group != nil && group.Color != nil && *group.Color != "" {
 			effectiveColor = *group.Color
 		}

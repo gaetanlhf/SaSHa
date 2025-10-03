@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ func classifyError(errMsg string) ErrorInfo {
 		errorInfo.Emoji = "🚫"
 		errorInfo.Color = "#FF6B6B"
 		errorInfo.Message = fmt.Sprintf("Web imports disabled: %s", displayMsg)
-		
+
 	case strings.Contains(errLower, "no such host") || strings.Contains(errLower, "host not found") ||
 		strings.Contains(errLower, "dns") || strings.Contains(errLower, "name resolution"):
 		errorInfo.Emoji = "🌐"
@@ -202,4 +202,8 @@ func extractDisplayMessage(errMsg string) string {
 	}
 
 	return cleanMsg
+}
+
+func ClassifyError(errMsg string) ErrorInfo {
+	return classifyError(errMsg)
 }

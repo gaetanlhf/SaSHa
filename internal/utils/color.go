@@ -1,11 +1,13 @@
-package main
+package utils
 
 import (
 	"strconv"
 	"strings"
+
+	"github.com/gaetanlhf/sasha/internal/config"
 )
 
-func getContrastColor(hexColor string) string {
+func GetContrastColor(hexColor string) string {
 	if strings.HasPrefix(hexColor, "#") {
 		hexColor = hexColor[1:]
 	}
@@ -26,15 +28,15 @@ func getContrastColor(hexColor string) string {
 	return "#FFFFFF"
 }
 
-func getPathColors(config Config, path []string) []string {
+func GetPathColors(cfg config.Config, path []string) []string {
 	colors := make([]string, len(path))
 
 	if len(path) == 0 {
 		return colors
 	}
 
-	var currentGroup *Group
-	for _, group := range config.Inventory.Groups {
+	var currentGroup *config.Group
+	for _, group := range cfg.Inventory.Groups {
 		if group.Name == path[0] {
 			currentGroup = group
 			if group.Color != nil && *group.Color != "" {

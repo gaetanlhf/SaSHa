@@ -1,4 +1,4 @@
-package main
+package ssh
 
 import (
 	"fmt"
@@ -6,10 +6,11 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/gaetanlhf/sasha/tty"
+	"github.com/gaetanlhf/sasha/internal/config"
+	"github.com/gaetanlhf/sasha/internal/tty"
 )
 
-func buildSSHCommand(server *Server, parentGroup *Group) string {
+func BuildCommand(server *config.Server, parentGroup *config.Group) string {
 	sshBinary := "ssh"
 	port := 22
 	user := ""
@@ -17,7 +18,7 @@ func buildSSHCommand(server *Server, parentGroup *Group) string {
 	var extraArgs []string
 
 	if parentGroup != nil {
-		parentSettings := getInheritedGroupSettings(parentGroup)
+		parentSettings := config.GetInheritedGroupSettings(parentGroup)
 
 		if parentSettings.SSHBinary != nil && *parentSettings.SSHBinary != "" {
 			sshBinary = *parentSettings.SSHBinary
@@ -82,7 +83,7 @@ func buildSSHCommand(server *Server, parentGroup *Group) string {
 	return cmdString
 }
 
-func extractHostFromCommand(cmdString string) string {
+func ExtractHostFromCommand(cmdString string) string {
 	if strings.Contains(cmdString, "SASHA_PASSWORD=") {
 		argsStart := strings.Index(cmdString, "SASHA_ARGS='")
 		if argsStart == -1 {
@@ -121,22 +122,20 @@ func extractHostFromCommand(cmdString string) string {
 	return ""
 }
 
-func handleApplicationExit(finalModel interface{}) {
-	if m, ok := finalModel.(model); ok && m.quitting && m.sshCommand != "" {
-		host := extractHostFromCommand(m.sshCommand)
-		if host != "" {
-			fmt.Printf("Connecting to %s...\n", host)
-		}
+func Execute(cmdString string) {
+	host := ExtractHostFromCommand(cmdString)
+	if host != "" {
+		fmt.Printf("Connecting to %s...\n", host)
+	}
 
-		if strings.Contains(m.sshCommand, "SASHA_PASSWORD=") {
-			executeSSHWithPassword(m.sshCommand)
-		} else {
-			executeNormalSSH(m.sshCommand)
-		}
+	if strings.Contains(cmdString, "SASHA_PASSWORD=") {
+		executeWithPassword(cmdString)
+	} else {
+		executeNormal(cmdString)
 	}
 }
 
-func executeSSHWithPassword(cmdString string) {
+func executeWithPassword(cmdString string) {
 	var password, binary, argsStr string
 
 	parts := strings.Split(cmdString, " ")
@@ -172,7 +171,7 @@ func executeSSHWithPassword(cmdString string) {
 		os.Exit(1)
 	}
 
-	args := parseSSHArgs(argsStr)
+	args := parseArgs(argsStr)
 
 	manager := tty.NewManager(password)
 	if err := manager.Run(binaryPath, args); err != nil {
@@ -181,7 +180,7 @@ func executeSSHWithPassword(cmdString string) {
 	}
 }
 
-func parseSSHArgs(argsStr string) []string {
+func parseArgs(argsStr string) []string {
 	var parts []string
 	var current strings.Builder
 	inQuotes := false
@@ -224,7 +223,7 @@ func parseSSHArgs(argsStr string) []string {
 	return parts
 }
 
-func executeNormalSSH(cmdString string) {
+func executeNormal(cmdString string) {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "/bin/bash"

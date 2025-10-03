@@ -1,11 +1,13 @@
-package main
+package ui
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"io"
+	"github.com/gaetanlhf/sasha/internal/utils"
 )
 
 type errorDelegate struct {
@@ -27,7 +29,7 @@ func (d errorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 }
 
 func (d errorDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(item)
+	i, ok := listItem.(Item)
 	if !ok {
 		return
 	}
@@ -39,11 +41,11 @@ func (d errorDelegate) Render(w io.Writer, m list.Model, index int, listItem lis
 		maxWidth = 80
 	}
 
-	title := truncateText(i.title, maxWidth)
+	title := utils.TruncateText(i.Title, maxWidth)
 	str := fmt.Sprintf("  %s", title)
 
-	if i.color != "" {
-		color := lipgloss.Color(i.color)
+	if i.Color != "" {
+		color := lipgloss.Color(i.Color)
 		style := lipgloss.NewStyle().Foreground(color)
 		str = style.Render(str)
 	}

@@ -1,8 +1,6 @@
-package main
+package config
 
-import (
-	"time"
-)
+import "time"
 
 type Config struct {
 	Inventory    *Inventory `yaml:"inventory,omitempty"`

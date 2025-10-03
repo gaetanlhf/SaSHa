@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"os"
@@ -71,4 +71,36 @@ func getFavoritesFilePath() (string, error) {
 	}
 
 	return filepath.Join(sashaHome, FAVORITES_FILE), nil
+}
+
+func GetCacheDir() (string, error) {
+	return getCacheDir()
+}
+
+func UpdateSpinnerMessage(message string) {
+	updateSpinnerMessage(message)
+}
+
+func GetHistoryFilePath() (string, error) {
+	return getHistoryFilePath()
+}
+
+func GetFavoritesFilePath() (string, error) {
+	return getFavoritesFilePath()
+}
+
+func GetConfigPath() string {
+	return getConfigPath()
+}
+
+func ShowSpinner(message string, operation func() error) error {
+	return showSpinner(message, operation)
+}
+
+func StartSpinner(message string) {
+	startSpinner(message)
+}
+
+func StopSpinner() {
+	stopSpinner()
 }

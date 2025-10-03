@@ -1,6 +1,6 @@
 build:
 	go mod download
-	CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=`git describe --tags`" -o sasha
+	CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=`git describe --tags`" -o sasha ./cmd/sasha
 
 default: build
 

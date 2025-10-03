@@ -1,61 +1,91 @@
-package main
+package ui
 
 import (
 	"fmt"
+	"io"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"io"
-	"strings"
+	"github.com/gaetanlhf/sasha/internal/utils"
 )
 
 type ColoredDelegate struct {
-	defaultDelegate list.DefaultDelegate
-	currentColor    string
-	inHistoryView   bool
-	inFavoritesView bool
+	DefaultDelegate list.DefaultDelegate
+	CurrentColor    string
+	InHistoryView   bool
+	InFavoritesView bool
 }
 
 func NewColoredDelegate() ColoredDelegate {
 	d := list.NewDefaultDelegate()
 
 	return ColoredDelegate{
-		defaultDelegate: d,
-		currentColor:    "",
-		inHistoryView:   false,
-		inFavoritesView: false,
+		DefaultDelegate: d,
+		CurrentColor:    "",
+		InHistoryView:   false,
+		InFavoritesView: false,
 	}
 }
 
 func (d ColoredDelegate) Height() int {
-	if d.inHistoryView {
+	if d.InHistoryView {
 		return 4
-	} else if d.inFavoritesView {
+	} else if d.InFavoritesView {
 		return 3
 	}
-	return d.defaultDelegate.Height()
+	return d.DefaultDelegate.Height()
 }
 
 func (d ColoredDelegate) Spacing() int {
-	return d.defaultDelegate.Spacing()
+	return d.DefaultDelegate.Spacing()
 }
 
 func (d ColoredDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
-	return d.defaultDelegate.Update(msg, m)
+	return d.DefaultDelegate.Update(msg, m)
 }
 
 func (d ColoredDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(item)
-	if !ok {
+	var (
+		title, desc, colorToUse string
+		isMultiline             bool
+		pathEntries, pathColors []string
+	)
+
+	// Gestion des différents types d'items
+	switch i := listItem.(type) {
+	case Item:
+		title = i.Title
+		desc = i.Description
+		colorToUse = i.Color
+		isMultiline = i.IsMultiline
+		pathEntries = i.PathEntries
+		pathColors = i.PathColors
+	case interface{ Title() string }:
+		title = i.Title()
+		desc = ""
+		if d, ok := listItem.(interface{ Description() string }); ok {
+			desc = d.Description()
+		}
+		if c, ok := listItem.(interface{ GetColor() string }); ok {
+			colorToUse = c.GetColor()
+		}
+		if ml, ok := listItem.(interface{ IsMultiline() bool }); ok {
+			isMultiline = ml.IsMultiline()
+		}
+		if pe, ok := listItem.(interface{ GetPathEntries() []string }); ok {
+			pathEntries = pe.GetPathEntries()
+		}
+		if pc, ok := listItem.(interface{ GetPathColors() []string }); ok {
+			pathColors = pc.GetPathColors()
+		}
+	default:
 		return
 	}
 
-	title := i.Title()
-	desc := i.Description()
-
-	colorToUse := i.color
 	if colorToUse == "" {
-		colorToUse = d.currentColor
+		colorToUse = d.CurrentColor
 	}
 
 	if colorToUse == "" {
@@ -72,28 +102,25 @@ func (d ColoredDelegate) Render(w io.Writer, m list.Model, index int, listItem l
 	var formattedDesc string
 	isSelected := index == m.Index()
 
-	if i.isMultiline && strings.Contains(desc, "\n") {
+	if isMultiline && strings.Contains(desc, "\n") {
 		lines := strings.Split(desc, "\n")
 
 		for idx, line := range lines {
-			if strings.Contains(line, "📁 ") && len(i.pathEntries) > 0 && isSelected {
+			if strings.Contains(line, "📁 ") && len(pathEntries) > 0 && isSelected {
 				pathPrefix := "📁 "
-
-				coloredPath := formatColoredPath(i.pathEntries, i.pathColors, colorToUse)
+				coloredPath := formatColoredPath(pathEntries, pathColors, colorToUse)
 				lines[idx] = pathPrefix + coloredPath
 			} else {
-				lines[idx] = truncateText(line, maxWidth)
+				lines[idx] = utils.TruncateText(line, maxWidth)
 			}
 		}
 		formattedDesc = strings.Join(lines, "\n")
 	} else {
-		title = truncateText(title, maxWidth)
-		formattedDesc = truncateText(desc, maxWidth)
+		title = utils.TruncateText(title, maxWidth)
+		formattedDesc = utils.TruncateText(desc, maxWidth)
 	}
 
-	var (
-		titleStyle, descStyle lipgloss.Style
-	)
+	var titleStyle, descStyle lipgloss.Style
 
 	if isSelected {
 		titleStyle = lipgloss.NewStyle().
@@ -101,11 +128,7 @@ func (d ColoredDelegate) Render(w io.Writer, m list.Model, index int, listItem l
 			Foreground(lipgloss.Color(colorToUse)).
 			PaddingLeft(2)
 
-		if i.isGroup {
-			title = "▶ " + title
-		} else {
-			title = "▶ " + title
-		}
+		title = "▶ " + title
 
 		descStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color(colorToUse)).

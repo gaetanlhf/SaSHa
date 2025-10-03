@@ -1,10 +1,10 @@
-package main
+package ui
 
 import (
 	"github.com/charmbracelet/bubbles/key"
 )
 
-type keyMap struct {
+type KeyMap struct {
 	Up        key.Binding
 	Down      key.Binding
 	Enter     key.Binding
@@ -17,7 +17,7 @@ type keyMap struct {
 	Filter    key.Binding
 }
 
-func newKeyMap(historyEnabled bool, favoritesEnabled bool, inErrorView bool) keyMap {
+func newKeyMap(historyEnabled bool, favoritesEnabled bool, inErrorView bool) KeyMap {
 	historyBinding := key.NewBinding(
 		key.WithKeys("h"),
 		key.WithHelp("h", "history"),
@@ -82,7 +82,7 @@ func newKeyMap(historyEnabled bool, favoritesEnabled bool, inErrorView bool) key
 		enterHelp = "continue"
 	}
 
-	return keyMap{
+	return KeyMap{
 		Up:   upBinding,
 		Down: downBinding,
 		Enter: key.NewBinding(
@@ -105,14 +105,14 @@ func newKeyMap(historyEnabled bool, favoritesEnabled bool, inErrorView bool) key
 	}
 }
 
-func (k keyMap) ShortHelp() []key.Binding {
+func (k KeyMap) ShortHelp() []key.Binding {
 	if k.Help.Enabled() {
 		return []key.Binding{k.Help}
 	}
 	return []key.Binding{k.Enter, k.Back}
 }
 
-func (k keyMap) FullHelp() [][]key.Binding {
+func (k KeyMap) FullHelp() [][]key.Binding {
 	if !k.Help.Enabled() {
 		return [][]key.Binding{
 			{k.Enter, k.Back, k.Quit},

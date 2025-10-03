@@ -1,13 +1,21 @@
-package main
+package history
 
 import (
 	"fmt"
-	"github.com/charmbracelet/bubbles/list"
 	"strings"
 	"time"
+
+	"github.com/charmbracelet/bubbles/list"
+	"github.com/gaetanlhf/sasha/internal/config"
 )
 
-func buildHistoryItems(historyData HistoryData, config Config, favoritesData FavoritesData) []list.Item {
+func BuildItems(
+	historyData Data,
+	cfg config.Config,
+	favoritesData interface{},
+	getPathColors func(config.Config, []string) []string,
+	isServerFavorited func(*config.Server, interface{}) bool,
+) []list.Item {
 	var items []list.Item
 
 	for i := len(historyData.Entries) - 1; i >= 0; i-- {
@@ -27,7 +35,7 @@ func buildHistoryItems(historyData HistoryData, config Config, favoritesData Fav
 			pathLine = fmt.Sprintf("📁 %s", pathStr)
 		}
 
-		pathColors := getPathColors(config, entry.Path)
+		pathColors := getPathColors(cfg, entry.Path)
 
 		timeStr := entry.Timestamp.Format(time.RFC822)
 		timeLine := fmt.Sprintf("🕒 %s", timeStr)
@@ -47,7 +55,7 @@ func buildHistoryItems(historyData HistoryData, config Config, favoritesData Fav
 		}
 
 		favoriteStatus := false
-		if config.Features.FavoritesEnabled {
+		if favoritesData != nil {
 			favoriteStatus = isServerFavorited(&entry.Server, favoritesData)
 		}
 
@@ -56,15 +64,12 @@ func buildHistoryItems(historyData HistoryData, config Config, favoritesData Fav
 			title = fmt.Sprintf("⭐ %s", entry.Server.Name)
 		}
 
-		items = append(items, item{
+		items = append(items, HistoryItem{
 			title:          title,
 			description:    description,
-			isGroup:        false,
 			path:           strings.Join(entry.Path, "/"),
 			color:          serverColor,
-			isHistory:      true,
 			historyEntry:   &entry,
-			isMultiline:    true,
 			pathEntries:    entry.Path,
 			pathColors:     pathColors,
 			favoriteStatus: favoriteStatus,
@@ -73,3 +78,25 @@ func buildHistoryItems(historyData HistoryData, config Config, favoritesData Fav
 
 	return items
 }
+
+type HistoryItem struct {
+	title          string
+	description    string
+	path           string
+	color          string
+	historyEntry   *Entry
+	pathEntries    []string
+	pathColors     []string
+	favoriteStatus bool
+}
+
+func (i HistoryItem) Title() string            { return i.title }
+func (i HistoryItem) Description() string      { return i.description }
+func (i HistoryItem) FilterValue() string      { return i.title }
+func (i HistoryItem) GetHistoryEntry() *Entry  { return i.historyEntry }
+func (i HistoryItem) GetPath() string          { return i.path }
+func (i HistoryItem) GetColor() string         { return i.color }
+func (i HistoryItem) GetPathEntries() []string { return i.pathEntries }
+func (i HistoryItem) GetPathColors() []string  { return i.pathColors }
+func (i HistoryItem) IsFavorite() bool         { return i.favoriteStatus }
+func (i HistoryItem) IsMultiline() bool        { return true }

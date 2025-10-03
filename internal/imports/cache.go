@@ -1,4 +1,4 @@
-package main
+package imports
 
 import (
 	"crypto/md5"
@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/gaetanlhf/sasha/internal/config"
+	"github.com/gaetanlhf/sasha/internal/utils"
 	"gopkg.in/yaml.v3"
 )
 
@@ -21,8 +23,8 @@ func NewCacheManager() *CacheManager {
 	}
 }
 
-func (c *CacheManager) GetCacheFilePath(url string, auth *AuthConfig) (string, error) {
-	cacheDir, err := getCacheDir()
+func (c *CacheManager) GetCacheFilePath(url string, auth *config.AuthConfig) (string, error) {
+	cacheDir, err := utils.GetCacheDir()
 	if err != nil {
 		return "", err
 	}
@@ -45,14 +47,14 @@ func (c *CacheManager) GetCacheFilePath(url string, auth *AuthConfig) (string, e
 	return filepath.Join(cacheDir, hashStr+".yaml"), nil
 }
 
-func (c *CacheManager) SaveToCache(url string, data ImportData, auth *AuthConfig) error {
+func (c *CacheManager) SaveToCache(url string, data config.ImportData, auth *config.AuthConfig) error {
 	cacheFile, err := c.GetCacheFilePath(url, auth)
 	if err != nil {
 		return err
 	}
 
-	cached := CachedImport{
-		Metadata: CacheMetadata{
+	cached := config.CachedImport{
+		Metadata: config.CacheMetadata{
 			URL:        url,
 			LastUpdate: time.Now(),
 		},
@@ -67,7 +69,7 @@ func (c *CacheManager) SaveToCache(url string, data ImportData, auth *AuthConfig
 	return os.WriteFile(cacheFile, yamlData, 0644)
 }
 
-func (c *CacheManager) GetCachedData(url string, schedule string, auth *AuthConfig) (*ImportData, bool, error) {
+func (c *CacheManager) GetCachedData(url string, schedule string, auth *config.AuthConfig) (*config.ImportData, bool, error) {
 	cacheFile, err := c.GetCacheFilePath(url, auth)
 	if err != nil {
 		return nil, false, err
@@ -81,7 +83,7 @@ func (c *CacheManager) GetCachedData(url string, schedule string, auth *AuthConf
 		return nil, false, err
 	}
 
-	var cached CachedImport
+	var cached config.CachedImport
 	if err := yaml.Unmarshal(data, &cached); err != nil {
 		return nil, false, err
 	}
@@ -90,7 +92,7 @@ func (c *CacheManager) GetCachedData(url string, schedule string, auth *AuthConf
 	return &cached.Data, needsUpdate, nil
 }
 
-func (c *CacheManager) IsCacheExpired(url string, schedule string, auth *AuthConfig) bool {
+func (c *CacheManager) IsCacheExpired(url string, schedule string, auth *config.AuthConfig) bool {
 	cacheFile, err := c.GetCacheFilePath(url, auth)
 	if err != nil {
 		return true
@@ -101,7 +103,7 @@ func (c *CacheManager) IsCacheExpired(url string, schedule string, auth *AuthCon
 		return true
 	}
 
-	var cached CachedImport
+	var cached config.CachedImport
 	if err := yaml.Unmarshal(data, &cached); err != nil {
 		return true
 	}
@@ -110,7 +112,7 @@ func (c *CacheManager) IsCacheExpired(url string, schedule string, auth *AuthCon
 }
 
 func (c *CacheManager) CleanupCache() error {
-	cacheDir, err := getCacheDir()
+	cacheDir, err := utils.GetCacheDir()
 	if err != nil {
 		return err
 	}
@@ -130,4 +132,8 @@ func (c *CacheManager) CleanupCache() error {
 	}
 
 	return nil
+}
+
+func GetCacheManager() *CacheManager {
+	return cacheManager
 }

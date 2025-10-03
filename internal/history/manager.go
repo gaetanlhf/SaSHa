@@ -1,28 +1,25 @@
-package main
+package history
 
 import (
 	"encoding/json"
 	"os"
 	"time"
+
+	"github.com/gaetanlhf/sasha/internal/config"
 )
 
-type HistoryEntry struct {
-	Server    Server    `json:"server"`
-	Path      []string  `json:"path"`
-	Timestamp time.Time `json:"timestamp"`
+type Entry struct {
+	Server    config.Server `json:"server"`
+	Path      []string      `json:"path"`
+	Timestamp time.Time     `json:"timestamp"`
 }
 
-type HistoryData struct {
-	Entries []HistoryEntry `json:"entries"`
+type Data struct {
+	Entries []Entry `json:"entries"`
 }
 
-func loadHistory() (HistoryData, error) {
-	var historyData HistoryData
-
-	historyPath, err := getHistoryFilePath()
-	if err != nil {
-		return historyData, err
-	}
+func Load(historyPath string) (Data, error) {
+	var historyData Data
 
 	data, err := os.ReadFile(historyPath)
 	if err != nil {
@@ -39,12 +36,7 @@ func loadHistory() (HistoryData, error) {
 	return historyData, nil
 }
 
-func saveHistory(historyData HistoryData) error {
-	historyPath, err := getHistoryFilePath()
-	if err != nil {
-		return err
-	}
-
+func Save(historyPath string, historyData Data) error {
 	data, err := json.MarshalIndent(historyData, "", "  ")
 	if err != nil {
 		return err
@@ -53,13 +45,8 @@ func saveHistory(historyData HistoryData) error {
 	return os.WriteFile(historyPath, data, 0644)
 }
 
-func clearHistory() error {
-	historyPath, err := getHistoryFilePath()
-	if err != nil {
-		return err
-	}
-
-	emptyHistory := HistoryData{Entries: []HistoryEntry{}}
+func Clear(historyPath string) error {
+	emptyHistory := Data{Entries: []Entry{}}
 	data, err := json.MarshalIndent(emptyHistory, "", "  ")
 	if err != nil {
 		return err
@@ -68,8 +55,8 @@ func clearHistory() error {
 	return os.WriteFile(historyPath, data, 0644)
 }
 
-func addToHistory(server *Server, path []string, config *Config) error {
-	historySize := config.Features.HistorySize
+func Add(historyPath string, server *config.Server, path []string, cfg *config.Config) error {
+	historySize := cfg.Features.HistorySize
 	if historySize == 0 {
 		return nil
 	}
@@ -78,12 +65,12 @@ func addToHistory(server *Server, path []string, config *Config) error {
 		historySize = 20
 	}
 
-	historyData, err := loadHistory()
+	historyData, err := Load(historyPath)
 	if err != nil {
 		return err
 	}
 
-	newEntry := HistoryEntry{
+	newEntry := Entry{
 		Server:    *server,
 		Path:      append([]string{}, path...),
 		Timestamp: time.Now(),
@@ -95,14 +82,14 @@ func addToHistory(server *Server, path []string, config *Config) error {
 		historyData.Entries = historyData.Entries[len(historyData.Entries)-historySize:]
 	}
 
-	return saveHistory(historyData)
+	return Save(historyPath, historyData)
 }
 
-func filterHistoryByExistingServers(historyData HistoryData, config *Config) HistoryData {
-	var filteredEntries []HistoryEntry
+func FilterByExistingServers(historyData Data, cfg *config.Config) Data {
+	var filteredEntries []Entry
 
-	allServers := getAllServersFromConfig(config)
-	validPaths := getAllValidPathsFromConfig(config)
+	allServers := getAllServersFromConfig(cfg)
+	validPaths := getAllValidPathsFromConfig(cfg)
 
 	for _, entry := range historyData.Entries {
 		if serverExistsInMap(entry.Server.Name, entry.Server.Host, allServers) {
@@ -121,45 +108,45 @@ func filterHistoryByExistingServers(historyData HistoryData, config *Config) His
 		}
 	}
 
-	return HistoryData{Entries: filteredEntries}
+	return Data{Entries: filteredEntries}
 }
 
-func getAllServersFromConfig(config *Config) map[string]struct{} {
+func getAllServersFromConfig(cfg *config.Config) map[string]struct{} {
 	serverMap := make(map[string]struct{})
 
-	if config.Inventory == nil {
+	if cfg.Inventory == nil {
 		return serverMap
 	}
 
-	for _, server := range config.Inventory.Hosts {
+	for _, server := range cfg.Inventory.Hosts {
 		key := server.Name + ":" + server.Host
 		serverMap[key] = struct{}{}
 	}
 
-	for _, group := range config.Inventory.Groups {
+	for _, group := range cfg.Inventory.Groups {
 		collectServersFromGroup(group, serverMap)
 	}
 
 	return serverMap
 }
 
-func getAllValidPathsFromConfig(config *Config) [][]string {
+func getAllValidPathsFromConfig(cfg *config.Config) [][]string {
 	var paths [][]string
 
 	paths = append(paths, []string{})
 
-	if config.Inventory == nil {
+	if cfg.Inventory == nil {
 		return paths
 	}
 
-	for _, group := range config.Inventory.Groups {
+	for _, group := range cfg.Inventory.Groups {
 		collectPathsFromGroup(group, []string{}, &paths)
 	}
 
 	return paths
 }
 
-func collectPathsFromGroup(group *Group, parentPath []string, paths *[][]string) {
+func collectPathsFromGroup(group *config.Group, parentPath []string, paths *[][]string) {
 	currentPath := append([]string{}, parentPath...)
 	currentPath = append(currentPath, group.Name)
 	*paths = append(*paths, currentPath)
@@ -181,7 +168,7 @@ func pathsEqual(path1, path2 []string) bool {
 	return true
 }
 
-func collectServersFromGroup(group *Group, serverMap map[string]struct{}) {
+func collectServersFromGroup(group *config.Group, serverMap map[string]struct{}) {
 	for _, server := range group.Hosts {
 		key := server.Name + ":" + server.Host
 		serverMap[key] = struct{}{}
