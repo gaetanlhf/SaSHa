@@ -71,13 +71,11 @@ func initialModel(config Config) model {
 		singleGroup := config.Groups[0]
 		initialPath = []string{singleGroup.Name}
 
-		if singleGroup.Color != nil && *singleGroup.Color != "" {
-			currentColor = *singleGroup.Color
-			initStyles(currentColor)
-			delegate.currentColor = currentColor
-		}
+		currentColor = resolveEffectiveColor(&config, initialPath)
+		initStyles(currentColor)
+		delegate.currentColor = currentColor
 
-		items = buildGroupItems(singleGroup.Groups, initialPath, currentColor)
+		items = buildGroupItems(singleGroup.Groups, initialPath, &config)
 		for _, server := range singleGroup.Hosts {
 			desc := server.Host
 			if server.User != nil && *server.User != "" {
@@ -87,7 +85,7 @@ func initialModel(config Config) model {
 				desc = fmt.Sprintf("%s:%d", desc, *server.Port)
 			}
 
-			serverColor := currentColor
+			serverColor := resolveEffectiveColor(&config, initialPath)
 			if server.Color != nil && *server.Color != "" {
 				serverColor = *server.Color
 			}
@@ -102,7 +100,7 @@ func initialModel(config Config) model {
 			})
 		}
 	} else {
-		items = buildGroupItems(config.Groups, []string{}, currentColor)
+		items = buildGroupItems(config.Groups, []string{}, &config)
 		for _, server := range config.Hosts {
 			if server.Group == "" {
 				desc := server.Host
@@ -113,7 +111,7 @@ func initialModel(config Config) model {
 					desc = fmt.Sprintf("%s:%d", desc, *server.Port)
 				}
 
-				serverColor := currentColor
+				serverColor := resolveEffectiveColor(&config, []string{})
 				if server.Color != nil && *server.Color != "" {
 					serverColor = *server.Color
 				}

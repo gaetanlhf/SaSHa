@@ -72,3 +72,28 @@ func findGroupByPathSlice(config *Config, path []string) *Group {
 
 	return currentGroup
 }
+
+func resolveEffectiveColor(config *Config, path []string) string {
+	defaultColor := "#FFFFFF"
+
+	if config.Color != nil && *config.Color != "" {
+		defaultColor = *config.Color
+	}
+
+	if len(path) == 0 {
+		return defaultColor
+	}
+
+	effectiveColor := defaultColor
+	pathSoFar := []string{}
+
+	for _, part := range path {
+		pathSoFar = append(pathSoFar, part)
+		group := findGroupByPathSlice(config, pathSoFar)
+		if group != nil && group.Color != nil && *group.Color != "" {
+			effectiveColor = *group.Color
+		}
+	}
+
+	return effectiveColor
+}

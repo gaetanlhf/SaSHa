@@ -94,9 +94,6 @@ func applyGlobalSettingsToDirective(config *Config, directive *ImportDirective) 
 	if directive.SSHBinary == nil && config.SSHBinary != nil {
 		directive.SSHBinary = config.SSHBinary
 	}
-	if directive.Color == nil && config.Color != nil {
-		directive.Color = config.Color
-	}
 	if len(directive.ExtraArgs) == 0 && len(config.ExtraArgs) > 0 {
 		directive.ExtraArgs = append([]string{}, config.ExtraArgs...)
 	}
@@ -120,9 +117,6 @@ func applyGlobalSettingsToGroup(config *Config, group *Group) {
 	}
 	if group.SSHBinary == nil && config.SSHBinary != nil {
 		group.SSHBinary = config.SSHBinary
-	}
-	if group.Color == nil && config.Color != nil {
-		group.Color = config.Color
 	}
 	if len(group.ExtraArgs) == 0 && len(config.ExtraArgs) > 0 {
 		group.ExtraArgs = append([]string{}, config.ExtraArgs...)
@@ -155,9 +149,6 @@ func applyGlobalSettingsToServer(config *Config, server *Server) {
 	}
 	if server.SSHBinary == nil && config.SSHBinary != nil {
 		server.SSHBinary = config.SSHBinary
-	}
-	if server.Color == nil && config.Color != nil {
-		server.Color = config.Color
 	}
 	if len(server.ExtraArgs) == 0 && len(config.ExtraArgs) > 0 {
 		server.ExtraArgs = append([]string{}, config.ExtraArgs...)
@@ -193,9 +184,6 @@ func collectImportDirectivesFromGroup(group *Group, path string) []ImportDirecti
 		}
 		if imports[i].SSHBinary == nil && group.SSHBinary != nil {
 			imports[i].SSHBinary = group.SSHBinary
-		}
-		if imports[i].Color == nil && group.Color != nil {
-			imports[i].Color = group.Color
 		}
 		if len(imports[i].ExtraArgs) == 0 && len(group.ExtraArgs) > 0 {
 			imports[i].ExtraArgs = append([]string{}, group.ExtraArgs...)
@@ -338,9 +326,6 @@ func getGroupInheritedSettings(config *Config, path string) inheritedSettings {
 				if currentGroup.SSHBinary != nil {
 					settings.SSHBinary = currentGroup.SSHBinary
 				}
-				if currentGroup.Color != nil {
-					settings.Color = currentGroup.Color
-				}
 				if len(currentGroup.ExtraArgs) > 0 {
 					settings.ExtraArgs = append([]string{}, currentGroup.ExtraArgs...)
 				}
@@ -375,7 +360,7 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 	effectivePort := inherited.Port
 	effectivePassword := inherited.Password
 	effectiveSSHBinary := inherited.SSHBinary
-	effectiveColor := inherited.Color
+	//effectiveColor := inherited.Color
 	effectiveNoCache := inherited.NoCache || directive.NoCache
 	effectiveAuth := inherited.Auth
 	effectiveExtraArgs := inherited.ExtraArgs
@@ -391,9 +376,6 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 	}
 	if directive.SSHBinary != nil {
 		effectiveSSHBinary = directive.SSHBinary
-	}
-	if directive.Color != nil {
-		effectiveColor = directive.Color
 	}
 	if directive.Auth != nil {
 		effectiveAuth = directive.Auth
@@ -414,9 +396,6 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 		}
 		if group.SSHBinary == nil && effectiveSSHBinary != nil {
 			group.SSHBinary = effectiveSSHBinary
-		}
-		if group.Color == nil && effectiveColor != nil {
-			group.Color = effectiveColor
 		}
 		if effectiveNoCache {
 			group.NoCache = true
@@ -450,9 +429,6 @@ func applyDirectiveSettingsWithInheritance(importData *ImportData, directive Imp
 		}
 		if host.SSHBinary == nil && effectiveSSHBinary != nil {
 			host.SSHBinary = effectiveSSHBinary
-		}
-		if host.Color == nil && effectiveColor != nil {
-			host.Color = effectiveColor
 		}
 		if len(host.ExtraArgs) == 0 && len(effectiveExtraArgs) > 0 {
 			host.ExtraArgs = append([]string{}, effectiveExtraArgs...)
@@ -490,9 +466,6 @@ func applyDirectiveSettings(importData *ImportData, directive ImportDirective) {
 		if group.SSHBinary == nil && directive.SSHBinary != nil {
 			group.SSHBinary = directive.SSHBinary
 		}
-		if group.Color == nil && directive.Color != nil {
-			group.Color = directive.Color
-		}
 		if directive.NoCache {
 			group.NoCache = true
 		}
@@ -523,9 +496,6 @@ func applyDirectiveSettings(importData *ImportData, directive ImportDirective) {
 		}
 		if host.SSHBinary == nil && directive.SSHBinary != nil {
 			host.SSHBinary = directive.SSHBinary
-		}
-		if host.Color == nil && directive.Color != nil {
-			host.Color = directive.Color
 		}
 		if len(host.ExtraArgs) == 0 && len(directive.ExtraArgs) > 0 {
 			host.ExtraArgs = append([]string{}, directive.ExtraArgs...)
@@ -788,9 +758,6 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 			}
 			if nestedDirective.SSHBinary == nil && directive.SSHBinary != nil {
 				nestedDirective.SSHBinary = directive.SSHBinary
-			}
-			if nestedDirective.Color == nil && directive.Color != nil {
-				nestedDirective.Color = directive.Color
 			}
 			if len(nestedDirective.ExtraArgs) == 0 && len(directive.ExtraArgs) > 0 {
 				nestedDirective.ExtraArgs = append([]string{}, directive.ExtraArgs...)

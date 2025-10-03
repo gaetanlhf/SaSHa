@@ -45,20 +45,7 @@ func (m *model) updateColorBasedOnCurrentPath() {
 		return
 	}
 
-	colorToUse := "#FFFFFF"
-
-	if len(m.currentPath) > 0 {
-		pathSoFar := []string{}
-
-		for _, part := range m.currentPath {
-			pathSoFar = append(pathSoFar, part)
-			tempGroup := findGroupByPathSlice(&m.config, pathSoFar)
-
-			if tempGroup != nil && tempGroup.Color != nil && *tempGroup.Color != "" {
-				colorToUse = *tempGroup.Color
-			}
-		}
-	}
+	colorToUse := resolveEffectiveColor(&m.config, m.currentPath)
 
 	if colorToUse != m.currentColor {
 		m.currentColor = colorToUse
@@ -115,7 +102,7 @@ func (m *model) updateListItems() {
 	}
 
 	if len(m.currentPath) == 0 {
-		items = buildGroupItems(m.config.Groups, []string{}, m.currentColor)
+		items = buildGroupItems(m.config.Groups, []string{}, &m.config)
 
 		for _, server := range m.config.Hosts {
 			if server.Group == "" {
@@ -127,7 +114,7 @@ func (m *model) updateListItems() {
 					desc = fmt.Sprintf("%s:%d", desc, *server.Port)
 				}
 
-				serverColor := m.currentColor
+				serverColor := resolveEffectiveColor(&m.config, []string{})
 				if server.Color != nil && *server.Color != "" {
 					serverColor = *server.Color
 				}
@@ -163,10 +150,7 @@ func (m *model) updateListItems() {
 				path = append(path, group.Name)
 				pathStr := strings.Join(path, "/")
 
-				groupColor := m.currentColor
-				if group.Color != nil && *group.Color != "" {
-					groupColor = *group.Color
-				}
+				groupColor := resolveEffectiveColor(&m.config, path)
 
 				descParts := []string{}
 
@@ -212,7 +196,7 @@ func (m *model) updateListItems() {
 					desc = fmt.Sprintf("%s:%d", desc, *server.Port)
 				}
 
-				serverColor := m.currentColor
+				serverColor := resolveEffectiveColor(&m.config, m.currentPath)
 				if server.Color != nil && *server.Color != "" {
 					serverColor = *server.Color
 				}

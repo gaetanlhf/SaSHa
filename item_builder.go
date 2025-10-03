@@ -28,7 +28,7 @@ func (i item) Title() string       { return i.title }
 func (i item) Description() string { return i.description }
 func (i item) FilterValue() string { return i.title }
 
-func buildGroupItems(groups []*Group, pathPrefix []string, defaultColor string) []list.Item {
+func buildGroupItems(groups []*Group, pathPrefix []string, config *Config) []list.Item {
 	var items []list.Item
 
 	for _, group := range groups {
@@ -36,10 +36,7 @@ func buildGroupItems(groups []*Group, pathPrefix []string, defaultColor string) 
 		path = append(path, group.Name)
 		pathStr := strings.Join(path, "/")
 
-		groupColor := defaultColor
-		if group.Color != nil && *group.Color != "" {
-			groupColor = *group.Color
-		}
+		groupColor := resolveEffectiveColor(config, path)
 
 		var descParts []string
 

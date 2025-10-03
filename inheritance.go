@@ -56,7 +56,6 @@ func propagateInheritedSettings(config *Config) {
 			Port:      config.Port,
 			Password:  config.Password,
 			SSHBinary: config.SSHBinary,
-			Color:     config.Color,
 			ExtraArgs: config.ExtraArgs,
 			NoCache:   config.NoCache,
 			Auth:      globalAuth,
@@ -105,7 +104,6 @@ func propagateGroupSettings(group *Group, parentSettings inheritedSettings) {
 		Port:      parentSettings.Port,
 		Password:  parentSettings.Password,
 		SSHBinary: parentSettings.SSHBinary,
-		Color:     parentSettings.Color,
 		NoCache:   parentSettings.NoCache,
 		Auth:      parentSettings.Auth,
 	}
@@ -125,9 +123,6 @@ func propagateGroupSettings(group *Group, parentSettings inheritedSettings) {
 	}
 	if group.SSHBinary != nil {
 		settings.SSHBinary = group.SSHBinary
-	}
-	if group.Color != nil {
-		settings.Color = group.Color
 	}
 	if len(group.ExtraArgs) > 0 {
 		settings.ExtraArgs = append([]string{}, group.ExtraArgs...)
@@ -163,9 +158,6 @@ func propagateGroupSettings(group *Group, parentSettings inheritedSettings) {
 		}
 		if host.SSHBinary == nil && settings.SSHBinary != nil {
 			host.SSHBinary = settings.SSHBinary
-		}
-		if host.Color == nil && settings.Color != nil {
-			host.Color = settings.Color
 		}
 		if len(host.ExtraArgs) == 0 && len(settings.ExtraArgs) > 0 {
 			host.ExtraArgs = append([]string{}, settings.ExtraArgs...)
