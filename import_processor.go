@@ -14,6 +14,7 @@ import (
 )
 
 var cacheManager *CacheManager
+var orderTracker *OrderTracker
 
 func init() {
 	cacheManager = NewCacheManager()
@@ -652,6 +653,8 @@ func resolveImportPath(importPath, basePath string) string {
 }
 
 func ProcessImports(config *Config, configPath string) error {
+	orderTracker = LoadOrderTracker(configPath)
+
 	importDirectives := collectImportDirectives(config)
 
 	config.ImportErrors = []string{}
@@ -775,8 +778,8 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 
 	if directive.Path == "" {
 		applyDirectiveSettings(&importData, directive)
-		config.Groups = append(config.Groups, importData.Groups...)
-		config.Hosts = append(config.Hosts, importData.Hosts...)
+		config.Groups = mergeWithYAMLOrder(config.Groups, importData.Groups, "", orderTracker)
+		config.Hosts = mergeWithYAMLOrder(config.Hosts, importData.Hosts, "", orderTracker)
 	} else {
 		targetGroup := findGroupByPath(config, directive.Path)
 		if targetGroup == nil {
@@ -787,8 +790,8 @@ func processImport(directive ImportDirective, config *Config, basePath string) e
 		ancestorSettings := getGroupInheritedSettings(config, directive.Path)
 		applyDirectiveSettingsWithInheritance(&importData, directive, ancestorSettings)
 
-		targetGroup.Groups = append(targetGroup.Groups, importData.Groups...)
-		targetGroup.Hosts = append(targetGroup.Hosts, importData.Hosts...)
+		targetGroup.Groups = mergeWithYAMLOrder(targetGroup.Groups, importData.Groups, directive.Path, orderTracker)
+		targetGroup.Hosts = mergeWithYAMLOrder(targetGroup.Hosts, importData.Hosts, directive.Path, orderTracker)
 	}
 
 	return nil
