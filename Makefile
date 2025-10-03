@@ -5,7 +5,7 @@ build:
 default: build
 
 upgrade:
-	go get -u -v
+	go get -u -v ./...
 	go mod download
 	go mod tidy
 	go mod verify
