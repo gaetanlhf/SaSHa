@@ -5,10 +5,10 @@ import (
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/gaetanlhf/sasha/internal/config"
-	"github.com/gaetanlhf/sasha/internal/favorites"
-	"github.com/gaetanlhf/sasha/internal/history"
-	"github.com/gaetanlhf/sasha/internal/utils"
+	"github.com/gaetanlhf/SaSHa/internal/config"
+	"github.com/gaetanlhf/SaSHa/internal/favorites"
+	"github.com/gaetanlhf/SaSHa/internal/history"
+	"github.com/gaetanlhf/SaSHa/internal/utils"
 )
 
 func InitialModel(cfg config.Config, historyPath string, favoritesPath string) Model {

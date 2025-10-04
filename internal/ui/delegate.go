@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/gaetanlhf/sasha/internal/utils"
+	"github.com/gaetanlhf/SaSHa/internal/utils"
 )
 
 type ColoredDelegate struct {

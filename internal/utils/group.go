@@ -3,7 +3,7 @@ package utils
 import (
 	"strings"
 
-	"github.com/gaetanlhf/sasha/internal/config"
+	"github.com/gaetanlhf/SaSHa/internal/config"
 )
 
 func FindGroupByPath(cfg *config.Config, path string) *config.Group {

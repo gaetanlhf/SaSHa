@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/gaetanlhf/sasha/internal/config"
-	"github.com/gaetanlhf/sasha/internal/utils"
+	"github.com/gaetanlhf/SaSHa/internal/config"
+	"github.com/gaetanlhf/SaSHa/internal/utils"
 )
 
 func buildGroupItems(groups []*config.Group, pathPrefix []string, cfg *config.Config) []list.Item {

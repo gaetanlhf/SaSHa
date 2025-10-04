@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gaetanlhf/sasha/internal/config"
+	"github.com/gaetanlhf/SaSHa/internal/config"
 )
 
 type Entry struct {

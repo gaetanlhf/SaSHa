@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gaetanlhf/sasha/internal/config"
+	"github.com/gaetanlhf/SaSHa/internal/config"
 )
 
 func GetContrastColor(hexColor string) string {

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gaetanlhf/sasha/internal/config"
-	"github.com/gaetanlhf/sasha/internal/utils"
+	"github.com/gaetanlhf/SaSHa/internal/config"
+	"github.com/gaetanlhf/SaSHa/internal/utils"
 	"gopkg.in/yaml.v3"
 )
 

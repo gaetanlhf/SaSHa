@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/gaetanlhf/sasha/internal/config"
+	"github.com/gaetanlhf/SaSHa/internal/config"
 )
 
 func BuildItems(

@@ -2,16 +2,16 @@ package ui
 
 import (
 	"fmt"
-	"github.com/gaetanlhf/sasha/internal/config"
+	"github.com/gaetanlhf/SaSHa/internal/config"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/gaetanlhf/sasha/internal/history"
-	"github.com/gaetanlhf/sasha/internal/ssh"
-	"github.com/gaetanlhf/sasha/internal/utils"
+	"github.com/gaetanlhf/SaSHa/internal/history"
+	"github.com/gaetanlhf/SaSHa/internal/ssh"
+	"github.com/gaetanlhf/SaSHa/internal/utils"
 )
 
 func (m Model) Init() tea.Cmd {

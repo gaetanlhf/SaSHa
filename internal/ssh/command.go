@@ -6,8 +6,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/gaetanlhf/sasha/internal/config"
-	"github.com/gaetanlhf/sasha/internal/tty"
+	"github.com/gaetanlhf/SaSHa/internal/config"
+	"github.com/gaetanlhf/SaSHa/internal/tty"
 )
 
 func BuildCommand(server *config.Server, parentGroup *config.Group) string {
