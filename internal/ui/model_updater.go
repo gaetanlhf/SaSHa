@@ -126,7 +126,7 @@ func (m *Model) updateListItems() {
 
 				favoriteStatus := false
 				if m.Config.Features.FavoritesEnabled {
-					favoriteStatus = favorites.IsServerFavorited(server, m.FavoritesData)
+					favoriteStatus = favorites.IsServerFavorited(server, []string{}, m.FavoritesData)
 				}
 
 				title := fmt.Sprintf("💻 %s", server.Name)
@@ -208,7 +208,7 @@ func (m *Model) updateListItems() {
 
 				favoriteStatus := false
 				if m.Config.Features.FavoritesEnabled {
-					favoriteStatus = favorites.IsServerFavorited(server, m.FavoritesData)
+					favoriteStatus = favorites.IsServerFavorited(server, m.CurrentPath, m.FavoritesData)
 				}
 
 				title := fmt.Sprintf("💻 %s", server.Name)
@@ -290,12 +290,20 @@ func (m *Model) toggleCurrentServerFavorite() {
 			var path []string
 			currentIndex := m.List.Index()
 
-			if m.InHistoryView && i.HistoryEntry != nil {
-				server = &i.HistoryEntry.Server
-				path = i.HistoryEntry.Path
-			} else if m.InFavoritesView && i.FavoriteEntry != nil {
-				server = &i.FavoriteEntry.Server
-				path = i.FavoriteEntry.Path
+			if m.InHistoryView {
+				if serverGetter, ok := m.List.SelectedItem().(interface{ GetServer() *config.Server }); ok {
+					server = serverGetter.GetServer()
+					if pathGetter, ok := m.List.SelectedItem().(interface{ GetPathEntries() []string }); ok {
+						path = pathGetter.GetPathEntries()
+					}
+				}
+			} else if m.InFavoritesView {
+				if serverGetter, ok := m.List.SelectedItem().(interface{ GetServer() *config.Server }); ok {
+					server = serverGetter.GetServer()
+					if pathGetter, ok := m.List.SelectedItem().(interface{ GetPathEntries() []string }); ok {
+						path = pathGetter.GetPathEntries()
+					}
+				}
 			} else {
 				serverName := strings.TrimPrefix(i.Title, "💻 ")
 				serverName = strings.TrimPrefix(serverName, "⭐ ")
@@ -304,7 +312,7 @@ func (m *Model) toggleCurrentServerFavorite() {
 			}
 
 			if server != nil {
-				isFavorited := favorites.IsServerFavorited(server, m.FavoritesData)
+				isFavorited := favorites.IsServerFavorited(server, path, m.FavoritesData)
 
 				favorites.Add(favoritesPath, server, path, &m.Config)
 
@@ -361,7 +369,7 @@ func buildFavoritesItems(favoritesData favorites.Data, cfg config.Config) []list
 
 func isServerFavoritedWrapper(server *config.Server, data interface{}) bool {
 	if favData, ok := data.(favorites.Data); ok {
-		return favorites.IsServerFavorited(server, favData)
+		return favorites.IsServerFavorited(server, []string{}, favData)
 	}
 	return false
 }

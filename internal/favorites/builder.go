@@ -16,21 +16,29 @@ func BuildItems(
 	var items []list.Item
 
 	for _, entry := range favoritesData.Entries {
-		connDetails := entry.Server.Host
-		if entry.Server.User != nil && *entry.Server.User != "" {
-			connDetails = fmt.Sprintf("%s@%s", *entry.Server.User, connDetails)
+		resolved := ResolveEntry(entry, &cfg)
+		if resolved == nil || resolved.Server == nil {
+			continue
 		}
-		if entry.Server.Port != nil && *entry.Server.Port != 0 && *entry.Server.Port != 22 {
-			connDetails = fmt.Sprintf("%s:%d", connDetails, *entry.Server.Port)
+
+		server := resolved.Server
+		path := resolved.Path
+
+		connDetails := server.Host
+		if server.User != nil && *server.User != "" {
+			connDetails = fmt.Sprintf("%s@%s", *server.User, connDetails)
+		}
+		if server.Port != nil && *server.Port != 0 && *server.Port != 22 {
+			connDetails = fmt.Sprintf("%s:%d", connDetails, *server.Port)
 		}
 
 		pathLine := ""
-		if len(entry.Path) > 0 {
-			pathStr := strings.Join(entry.Path, " > ")
+		if len(path) > 0 {
+			pathStr := strings.Join(path, " > ")
 			pathLine = fmt.Sprintf("📁 %s", pathStr)
 		}
 
-		pathColors := getPathColors(cfg, entry.Path)
+		pathColors := getPathColors(cfg, path)
 
 		var descLines []string
 		descLines = append(descLines, connDetails)
@@ -41,18 +49,18 @@ func BuildItems(
 		description := strings.Join(descLines, "\n")
 
 		serverColor := "#FFFFFF"
-		if entry.Server.Color != nil && *entry.Server.Color != "" {
-			serverColor = *entry.Server.Color
+		if server.Color != nil && *server.Color != "" {
+			serverColor = *server.Color
 		}
 
 		items = append(items, FavoriteItem{
-			title:         fmt.Sprintf("💻 %s", entry.Server.Name),
-			description:   description,
-			path:          strings.Join(entry.Path, "/"),
-			color:         serverColor,
-			favoriteEntry: &entry,
-			pathEntries:   entry.Path,
-			pathColors:    pathColors,
+			title:       fmt.Sprintf("💻 %s", server.Name),
+			description: description,
+			path:        strings.Join(path, "/"),
+			color:       serverColor,
+			server:      server,
+			pathEntries: path,
+			pathColors:  pathColors,
 		})
 	}
 
@@ -60,21 +68,21 @@ func BuildItems(
 }
 
 type FavoriteItem struct {
-	title         string
-	description   string
-	path          string
-	color         string
-	favoriteEntry *Entry
-	pathEntries   []string
-	pathColors    []string
+	title       string
+	description string
+	path        string
+	color       string
+	server      *config.Server
+	pathEntries []string
+	pathColors  []string
 }
 
-func (i FavoriteItem) Title() string            { return i.title }
-func (i FavoriteItem) Description() string      { return i.description }
-func (i FavoriteItem) FilterValue() string      { return i.title }
-func (i FavoriteItem) GetFavoriteEntry() *Entry { return i.favoriteEntry }
-func (i FavoriteItem) GetPath() string          { return i.path }
-func (i FavoriteItem) GetColor() string         { return i.color }
-func (i FavoriteItem) GetPathEntries() []string { return i.pathEntries }
-func (i FavoriteItem) GetPathColors() []string  { return i.pathColors }
-func (i FavoriteItem) IsMultiline() bool        { return true }
+func (i FavoriteItem) Title() string             { return i.title }
+func (i FavoriteItem) Description() string       { return i.description }
+func (i FavoriteItem) FilterValue() string       { return i.title }
+func (i FavoriteItem) GetServer() *config.Server { return i.server }
+func (i FavoriteItem) GetPath() string           { return i.path }
+func (i FavoriteItem) GetColor() string          { return i.color }
+func (i FavoriteItem) GetPathEntries() []string  { return i.pathEntries }
+func (i FavoriteItem) GetPathColors() []string   { return i.pathColors }
+func (i FavoriteItem) IsMultiline() bool         { return true }

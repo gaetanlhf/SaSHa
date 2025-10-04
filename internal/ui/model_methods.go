@@ -2,13 +2,13 @@ package ui
 
 import (
 	"fmt"
+	"github.com/gaetanlhf/sasha/internal/config"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/gaetanlhf/sasha/internal/favorites"
 	"github.com/gaetanlhf/sasha/internal/history"
 	"github.com/gaetanlhf/sasha/internal/ssh"
 	"github.com/gaetanlhf/sasha/internal/utils"
@@ -126,35 +126,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			historyPath, _ := utils.GetHistoryFilePath()
 
 			if m.InHistoryView {
-				if he, ok := m.List.SelectedItem().(interface{ GetHistoryEntry() *history.Entry }); ok {
-					entry := he.GetHistoryEntry()
-					if entry != nil {
-						server := &entry.Server
-						serverPath := entry.Path
+				if he, ok := m.List.SelectedItem().(interface{ GetServer() *config.Server }); ok {
+					server := he.GetServer()
+					if server != nil {
+						if pathGetter, ok := m.List.SelectedItem().(interface{ GetPathEntries() []string }); ok {
+							serverPath := pathGetter.GetPathEntries()
 
-						currentGroup := utils.FindGroupByPathSlice(&m.Config, serverPath)
-						m.SSHCommand = ssh.BuildCommand(server, currentGroup)
+							currentGroup := utils.FindGroupByPathSlice(&m.Config, serverPath)
+							m.SSHCommand = ssh.BuildCommand(server, currentGroup)
 
-						history.Add(historyPath, server, serverPath, &m.Config)
+							history.Add(historyPath, server, serverPath, &m.Config)
 
-						m.Quitting = true
-						return m, tea.Quit
+							m.Quitting = true
+							return m, tea.Quit
+						}
 					}
 				}
 			} else if m.InFavoritesView {
-				if fe, ok := m.List.SelectedItem().(interface{ GetFavoriteEntry() *favorites.Entry }); ok {
-					entry := fe.GetFavoriteEntry()
-					if entry != nil {
-						server := &entry.Server
-						serverPath := entry.Path
+				if fe, ok := m.List.SelectedItem().(interface{ GetServer() *config.Server }); ok {
+					server := fe.GetServer()
+					if server != nil {
+						if pathGetter, ok := m.List.SelectedItem().(interface{ GetPathEntries() []string }); ok {
+							serverPath := pathGetter.GetPathEntries()
 
-						currentGroup := utils.FindGroupByPathSlice(&m.Config, serverPath)
-						m.SSHCommand = ssh.BuildCommand(server, currentGroup)
+							currentGroup := utils.FindGroupByPathSlice(&m.Config, serverPath)
+							m.SSHCommand = ssh.BuildCommand(server, currentGroup)
 
-						history.Add(historyPath, server, serverPath, &m.Config)
+							history.Add(historyPath, server, serverPath, &m.Config)
 
-						m.Quitting = true
-						return m, tea.Quit
+							m.Quitting = true
+							return m, tea.Quit
+						}
 					}
 				}
 			} else if i, ok := m.List.SelectedItem().(Item); ok {

@@ -20,22 +20,29 @@ func BuildItems(
 
 	for i := len(historyData.Entries) - 1; i >= 0; i-- {
 		entry := historyData.Entries[i]
-
-		connDetails := entry.Server.Host
-		if entry.Server.User != nil && *entry.Server.User != "" {
-			connDetails = fmt.Sprintf("%s@%s", *entry.Server.User, connDetails)
+		resolved := ResolveEntry(entry, &cfg)
+		if resolved == nil || resolved.Server == nil {
+			continue
 		}
-		if entry.Server.Port != nil && *entry.Server.Port != 0 && *entry.Server.Port != 22 {
-			connDetails = fmt.Sprintf("%s:%d", connDetails, *entry.Server.Port)
+
+		server := resolved.Server
+		path := resolved.Path
+
+		connDetails := server.Host
+		if server.User != nil && *server.User != "" {
+			connDetails = fmt.Sprintf("%s@%s", *server.User, connDetails)
+		}
+		if server.Port != nil && *server.Port != 0 && *server.Port != 22 {
+			connDetails = fmt.Sprintf("%s:%d", connDetails, *server.Port)
 		}
 
 		pathLine := ""
-		if len(entry.Path) > 0 {
-			pathStr := strings.Join(entry.Path, " > ")
+		if len(path) > 0 {
+			pathStr := strings.Join(path, " > ")
 			pathLine = fmt.Sprintf("📁 %s", pathStr)
 		}
 
-		pathColors := getPathColors(cfg, entry.Path)
+		pathColors := getPathColors(cfg, path)
 
 		timeStr := entry.Timestamp.Format(time.RFC822)
 		timeLine := fmt.Sprintf("🕒 %s", timeStr)
@@ -50,27 +57,27 @@ func BuildItems(
 		description := strings.Join(descLines, "\n")
 
 		serverColor := "#FFFFFF"
-		if entry.Server.Color != nil && *entry.Server.Color != "" {
-			serverColor = *entry.Server.Color
+		if server.Color != nil && *server.Color != "" {
+			serverColor = *server.Color
 		}
 
 		favoriteStatus := false
 		if favoritesData != nil {
-			favoriteStatus = isServerFavorited(&entry.Server, favoritesData)
+			favoriteStatus = isServerFavorited(server, favoritesData)
 		}
 
-		title := fmt.Sprintf("💻 %s", entry.Server.Name)
+		title := fmt.Sprintf("💻 %s", server.Name)
 		if favoriteStatus {
-			title = fmt.Sprintf("⭐ %s", entry.Server.Name)
+			title = fmt.Sprintf("⭐ %s", server.Name)
 		}
 
 		items = append(items, HistoryItem{
 			title:          title,
 			description:    description,
-			path:           strings.Join(entry.Path, "/"),
+			path:           strings.Join(path, "/"),
 			color:          serverColor,
-			historyEntry:   &entry,
-			pathEntries:    entry.Path,
+			server:         server,
+			pathEntries:    path,
 			pathColors:     pathColors,
 			favoriteStatus: favoriteStatus,
 		})
@@ -84,19 +91,19 @@ type HistoryItem struct {
 	description    string
 	path           string
 	color          string
-	historyEntry   *Entry
+	server         *config.Server
 	pathEntries    []string
 	pathColors     []string
 	favoriteStatus bool
 }
 
-func (i HistoryItem) Title() string            { return i.title }
-func (i HistoryItem) Description() string      { return i.description }
-func (i HistoryItem) FilterValue() string      { return i.title }
-func (i HistoryItem) GetHistoryEntry() *Entry  { return i.historyEntry }
-func (i HistoryItem) GetPath() string          { return i.path }
-func (i HistoryItem) GetColor() string         { return i.color }
-func (i HistoryItem) GetPathEntries() []string { return i.pathEntries }
-func (i HistoryItem) GetPathColors() []string  { return i.pathColors }
-func (i HistoryItem) IsFavorite() bool         { return i.favoriteStatus }
-func (i HistoryItem) IsMultiline() bool        { return true }
+func (i HistoryItem) Title() string             { return i.title }
+func (i HistoryItem) Description() string       { return i.description }
+func (i HistoryItem) FilterValue() string       { return i.title }
+func (i HistoryItem) GetServer() *config.Server { return i.server }
+func (i HistoryItem) GetPath() string           { return i.path }
+func (i HistoryItem) GetColor() string          { return i.color }
+func (i HistoryItem) GetPathEntries() []string  { return i.pathEntries }
+func (i HistoryItem) GetPathColors() []string   { return i.pathColors }
+func (i HistoryItem) IsFavorite() bool          { return i.favoriteStatus }
+func (i HistoryItem) IsMultiline() bool         { return true }
