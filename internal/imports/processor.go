@@ -486,6 +486,16 @@ func readRemoteFile(urlStr string, schedule string, noCache bool, auth *config.A
 		return emptyData, false, fmt.Errorf("failed to read response body from %s: %w", urlStr, err)
 	}
 
+	yamlContent := string(data)
+	prefix := "importable:"
+	if !strings.HasPrefix(yamlContent, prefix) {
+		return emptyData, false, fmt.Errorf("invalid import file %s: must start with 'importable:'", urlStr)
+	}
+
+	yamlContent = strings.TrimPrefix(yamlContent, prefix)
+	yamlContent = strings.TrimLeft(yamlContent, " \t\n\r")
+	data = []byte(yamlContent)
+
 	var importData config.ImportData
 	if err := yaml.Unmarshal(data, &importData); err != nil {
 		if !noCache && schedule != "" {
@@ -604,6 +614,17 @@ func processImport(directive config.ImportDirective, cfg *config.Config, basePat
 			errMsg := fmt.Sprintf("Failed to read import file %s: empty file", filePath)
 			return fmt.Errorf(errMsg)
 		}
+
+		yamlContent := string(data)
+		prefix := "importable:"
+		if !strings.HasPrefix(yamlContent, prefix) {
+			errMsg := fmt.Sprintf("Invalid import file %s: must start with 'importable:'", filePath)
+			return fmt.Errorf(errMsg)
+		}
+
+		yamlContent = strings.TrimPrefix(yamlContent, prefix)
+		yamlContent = strings.TrimLeft(yamlContent, " \t\n\r")
+		data = []byte(yamlContent)
 
 		if yamlErr := yaml.Unmarshal(data, &importData); yamlErr != nil {
 			errMsg := fmt.Sprintf("Failed to parse import file %s: %v", filePath, yamlErr)
