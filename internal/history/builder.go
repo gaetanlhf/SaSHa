@@ -86,17 +86,6 @@ func BuildItems(
 	return items
 }
 
-type HistoryItem struct {
-	title          string
-	description    string
-	path           string
-	color          string
-	server         *config.Server
-	pathEntries    []string
-	pathColors     []string
-	favoriteStatus bool
-}
-
 func (i HistoryItem) Title() string             { return i.title }
 func (i HistoryItem) Description() string       { return i.description }
 func (i HistoryItem) FilterValue() string       { return i.title }

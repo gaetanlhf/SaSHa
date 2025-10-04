@@ -2,17 +2,6 @@ package config
 
 import "gopkg.in/yaml.v3"
 
-type InheritedSettings struct {
-	User      *string
-	Port      *int
-	Password  *string
-	ExtraArgs []string
-	SSHBinary *string
-	Color     *string
-	NoCache   bool
-	Auth      *AuthConfig
-}
-
 func GetInheritedGroupSettings(group *Group) InheritedSettings {
 	inherited := InheritedSettings{
 		User:      group.User,

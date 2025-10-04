@@ -4,19 +4,6 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 )
 
-type KeyMap struct {
-	Up        key.Binding
-	Down      key.Binding
-	Enter     key.Binding
-	Quit      key.Binding
-	Back      key.Binding
-	Help      key.Binding
-	History   key.Binding
-	Favorites key.Binding
-	Favorite  key.Binding
-	Filter    key.Binding
-}
-
 func newKeyMap(historyEnabled bool, favoritesEnabled bool, inErrorView bool) KeyMap {
 	historyBinding := key.NewBinding(
 		key.WithKeys("h"),

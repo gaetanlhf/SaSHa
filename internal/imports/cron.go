@@ -5,10 +5,6 @@ import (
 	"time"
 )
 
-type CronManager struct {
-	parser cron.Parser
-}
-
 func NewCronManager() *CronManager {
 	return &CronManager{
 		parser: cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow),

@@ -22,17 +22,6 @@ func init() {
 	cacheManager = NewCacheManager()
 }
 
-type inheritedSettings struct {
-	User      *string
-	Port      *int
-	Password  *string
-	ExtraArgs []string
-	SSHBinary *string
-	Color     *string
-	NoCache   bool
-	Auth      *config.AuthConfig
-}
-
 func Process(cfg *config.Config, configPath string) error {
 	orderTracker = LoadOrderTracker(configPath)
 

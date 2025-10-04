@@ -13,10 +13,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type CacheManager struct {
-	cronManager *CronManager
-}
-
 func NewCacheManager() *CacheManager {
 	return &CacheManager{
 		cronManager: NewCronManager(),

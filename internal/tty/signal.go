@@ -4,29 +4,10 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"golang.org/x/term"
 )
-
-type SignalManager struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	wg     sync.WaitGroup
-	mu     sync.RWMutex
-
-	childPid int
-	oldState *term.State
-
-	winchChan chan os.Signal
-	termChan  chan os.Signal
-
-	onWindowResize func()
-	onTerminate    func()
-
-	cleanup []func()
-}
 
 func NewSignalManager() *SignalManager {
 	ctx, cancel := context.WithCancel(context.Background())

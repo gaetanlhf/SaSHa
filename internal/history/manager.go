@@ -11,15 +11,6 @@ import (
 	"github.com/gaetanlhf/SaSHa/internal/config"
 )
 
-type Entry struct {
-	Fingerprint string    `json:"fingerprint"`
-	Timestamp   time.Time `json:"timestamp"`
-}
-
-type Data struct {
-	Entries []Entry `json:"entries"`
-}
-
 func makeFingerprint(name, host string, path []string) string {
 	key := name + ":" + host + ":" + strings.Join(path, "/")
 	hash := md5.Sum([]byte(key))
@@ -104,11 +95,6 @@ func FilterByExistingServers(historyData Data, cfg *config.Config) Data {
 	}
 
 	return Data{Entries: filteredEntries}
-}
-
-type ResolvedEntry struct {
-	Server *config.Server
-	Path   []string
 }
 
 func ResolveEntry(entry Entry, cfg *config.Config) *ResolvedEntry {

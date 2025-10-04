@@ -20,21 +20,6 @@ const (
 	PasswordDelay    = 100 * time.Millisecond
 )
 
-type Manager struct {
-	masterFd  int
-	slaveFd   int
-	slaveName string
-	password  string
-
-	signalManager *SignalManager
-	promptMatcher *PromptMatcher
-
-	childPid     int
-	passwordSent bool
-
-	mu sync.RWMutex
-}
-
 func NewManager(password string) *Manager {
 	return &Manager{
 		password:      password,
@@ -209,13 +194,6 @@ func (m *Manager) waitForChild() int {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-}
-
-type winsize struct {
-	Row    uint16
-	Col    uint16
-	Xpixel uint16
-	Ypixel uint16
 }
 
 func (m *Manager) setTerminalSize() error {

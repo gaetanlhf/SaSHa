@@ -7,16 +7,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type ElementPosition struct {
-	Type  string
-	Index int
-	Line  int
-}
-
-type OrderTracker struct {
-	positions map[string][]ElementPosition
-}
-
 func NewOrderTracker() *OrderTracker {
 	return &OrderTracker{
 		positions: make(map[string][]ElementPosition),

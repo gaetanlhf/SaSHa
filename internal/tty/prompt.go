@@ -5,23 +5,10 @@ import (
 	"strings"
 )
 
-type PromptAction int
-
 const (
 	ActionSendPassword PromptAction = iota
 	ActionIgnore
 )
-
-type PromptMatcher struct {
-	patterns []PromptPattern
-}
-
-type PromptPattern struct {
-	name     string
-	patterns []string
-	regexes  []*regexp.Regexp
-	action   PromptAction
-}
 
 func NewPromptMatcher() *PromptMatcher {
 	passwordPatterns := []string{

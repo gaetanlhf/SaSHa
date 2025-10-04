@@ -10,14 +10,6 @@ import (
 	"github.com/gaetanlhf/SaSHa/internal/config"
 )
 
-type Entry struct {
-	Fingerprint string `json:"fingerprint"`
-}
-
-type Data struct {
-	Entries []Entry `json:"entries"`
-}
-
 func makeFingerprint(name, host string, path []string) string {
 	key := name + ":" + host + ":" + strings.Join(path, "/")
 	hash := md5.Sum([]byte(key))
@@ -110,11 +102,6 @@ func IsServerFavorited(server *config.Server, path []string, favoritesData Data)
 		}
 	}
 	return false
-}
-
-type ResolvedEntry struct {
-	Server *config.Server
-	Path   []string
 }
 
 func ResolveEntry(entry Entry, cfg *config.Config) *ResolvedEntry {

@@ -10,10 +10,6 @@ import (
 	"github.com/gaetanlhf/SaSHa/internal/utils"
 )
 
-type errorDelegate struct {
-	showDesc bool
-}
-
 func newErrorDelegate() errorDelegate {
 	return errorDelegate{
 		showDesc: false,

@@ -93,3 +93,14 @@ type CachedImport struct {
 	Metadata CacheMetadata `yaml:"metadata"`
 	Data     ImportData    `yaml:"data"`
 }
+
+type InheritedSettings struct {
+	User      *string
+	Port      *int
+	Password  *string
+	ExtraArgs []string
+	SSHBinary *string
+	Color     *string
+	NoCache   bool
+	Auth      *AuthConfig
+}

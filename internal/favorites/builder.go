@@ -67,16 +67,6 @@ func BuildItems(
 	return items
 }
 
-type FavoriteItem struct {
-	title       string
-	description string
-	path        string
-	color       string
-	server      *config.Server
-	pathEntries []string
-	pathColors  []string
-}
-
 func (i FavoriteItem) Title() string             { return i.title }
 func (i FavoriteItem) Description() string       { return i.description }
 func (i FavoriteItem) FilterValue() string       { return i.title }

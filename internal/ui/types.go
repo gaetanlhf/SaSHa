@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/gaetanlhf/SaSHa/internal/config"
 	"github.com/gaetanlhf/SaSHa/internal/favorites"
@@ -48,4 +49,28 @@ type Model struct {
 	FavoritesData    favorites.Data
 	StartInGroup     bool
 	SelectionStack   []int
+}
+
+type ColoredDelegate struct {
+	DefaultDelegate list.DefaultDelegate
+	CurrentColor    string
+	InHistoryView   bool
+	InFavoritesView bool
+}
+
+type errorDelegate struct {
+	showDesc bool
+}
+
+type KeyMap struct {
+	Up        key.Binding
+	Down      key.Binding
+	Enter     key.Binding
+	Quit      key.Binding
+	Back      key.Binding
+	Help      key.Binding
+	History   key.Binding
+	Favorites key.Binding
+	Favorite  key.Binding
+	Filter    key.Binding
 }

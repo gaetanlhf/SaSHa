@@ -11,13 +11,6 @@ import (
 	"github.com/gaetanlhf/SaSHa/internal/utils"
 )
 
-type ColoredDelegate struct {
-	DefaultDelegate list.DefaultDelegate
-	CurrentColor    string
-	InHistoryView   bool
-	InFavoritesView bool
-}
-
 func NewColoredDelegate() ColoredDelegate {
 	d := list.NewDefaultDelegate()
 
@@ -53,7 +46,6 @@ func (d ColoredDelegate) Render(w io.Writer, m list.Model, index int, listItem l
 		pathEntries, pathColors []string
 	)
 
-	// Gestion des différents types d'items
 	switch i := listItem.(type) {
 	case Item:
 		title = i.Title
