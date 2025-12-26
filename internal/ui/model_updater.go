@@ -295,6 +295,14 @@ func (m *Model) toggleCurrentServerFavorite() {
 					server = serverGetter.GetServer()
 					if pathGetter, ok := m.List.SelectedItem().(interface{ GetPathEntries() []string }); ok {
 						path = pathGetter.GetPathEntries()
+
+						if m.StartInGroup && m.Config.Inventory != nil && len(m.Config.Inventory.Groups) == 1 {
+							rootGroupName := m.Config.Inventory.Groups[0].Name
+							if len(path) == 0 || path[0] != rootGroupName {
+								newPath := append([]string{rootGroupName}, path...)
+								path = newPath
+							}
+						}
 					}
 				}
 			} else if m.InFavoritesView {
@@ -302,6 +310,14 @@ func (m *Model) toggleCurrentServerFavorite() {
 					server = serverGetter.GetServer()
 					if pathGetter, ok := m.List.SelectedItem().(interface{ GetPathEntries() []string }); ok {
 						path = pathGetter.GetPathEntries()
+
+						if m.StartInGroup && m.Config.Inventory != nil && len(m.Config.Inventory.Groups) == 1 {
+							rootGroupName := m.Config.Inventory.Groups[0].Name
+							if len(path) == 0 || path[0] != rootGroupName {
+								newPath := append([]string{rootGroupName}, path...)
+								path = newPath
+							}
+						}
 					}
 				}
 			} else {

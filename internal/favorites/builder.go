@@ -15,6 +15,8 @@ func BuildItems(
 ) []list.Item {
 	var items []list.Item
 
+	startInGroup := cfg.Inventory != nil && len(cfg.Inventory.Groups) == 1 && len(cfg.Inventory.Hosts) == 0
+
 	for _, entry := range favoritesData.Entries {
 		resolved := ResolveEntry(entry, &cfg)
 		if resolved == nil || resolved.Server == nil {
@@ -23,6 +25,14 @@ func BuildItems(
 
 		server := resolved.Server
 		path := resolved.Path
+		pathColors := getPathColors(cfg, path)
+
+		if startInGroup && len(path) > 0 && path[0] == cfg.Inventory.Groups[0].Name {
+			path = path[1:]
+			if len(pathColors) > 0 {
+				pathColors = pathColors[1:]
+			}
+		}
 
 		connDetails := server.Host
 		if server.User != nil && *server.User != "" {
@@ -37,8 +47,6 @@ func BuildItems(
 			pathStr := strings.Join(path, " > ")
 			pathLine = fmt.Sprintf("📁 %s", pathStr)
 		}
-
-		pathColors := getPathColors(cfg, path)
 
 		var descLines []string
 		descLines = append(descLines, connDetails)

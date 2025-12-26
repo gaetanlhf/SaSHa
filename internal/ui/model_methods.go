@@ -2,8 +2,9 @@ package ui
 
 import (
 	"fmt"
-	"github.com/gaetanlhf/SaSHa/internal/config"
 	"strings"
+
+	"github.com/gaetanlhf/SaSHa/internal/config"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -132,6 +133,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						if pathGetter, ok := m.List.SelectedItem().(interface{ GetPathEntries() []string }); ok {
 							serverPath := pathGetter.GetPathEntries()
 
+							if m.StartInGroup && m.Config.Inventory != nil && len(m.Config.Inventory.Groups) == 1 {
+								rootGroupName := m.Config.Inventory.Groups[0].Name
+								if len(serverPath) == 0 || serverPath[0] != rootGroupName {
+									newPath := append([]string{rootGroupName}, serverPath...)
+									serverPath = newPath
+								}
+							}
+
 							currentGroup := utils.FindGroupByPathSlice(&m.Config, serverPath)
 							m.SSHCommand = ssh.BuildCommand(server, currentGroup)
 
@@ -148,6 +157,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if server != nil {
 						if pathGetter, ok := m.List.SelectedItem().(interface{ GetPathEntries() []string }); ok {
 							serverPath := pathGetter.GetPathEntries()
+
+							if m.StartInGroup && m.Config.Inventory != nil && len(m.Config.Inventory.Groups) == 1 {
+								rootGroupName := m.Config.Inventory.Groups[0].Name
+								if len(serverPath) == 0 || serverPath[0] != rootGroupName {
+									newPath := append([]string{rootGroupName}, serverPath...)
+									serverPath = newPath
+								}
+							}
 
 							currentGroup := utils.FindGroupByPathSlice(&m.Config, serverPath)
 							m.SSHCommand = ssh.BuildCommand(server, currentGroup)

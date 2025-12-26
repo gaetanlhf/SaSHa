@@ -18,6 +18,8 @@ func BuildItems(
 ) []list.Item {
 	var items []list.Item
 
+	startInGroup := cfg.Inventory != nil && len(cfg.Inventory.Groups) == 1 && len(cfg.Inventory.Hosts) == 0
+
 	for i := len(historyData.Entries) - 1; i >= 0; i-- {
 		entry := historyData.Entries[i]
 		resolved := ResolveEntry(entry, &cfg)
@@ -27,6 +29,14 @@ func BuildItems(
 
 		server := resolved.Server
 		path := resolved.Path
+		pathColors := getPathColors(cfg, path)
+
+		if startInGroup && len(path) > 0 && path[0] == cfg.Inventory.Groups[0].Name {
+			path = path[1:]
+			if len(pathColors) > 0 {
+				pathColors = pathColors[1:]
+			}
+		}
 
 		connDetails := server.Host
 		if server.User != nil && *server.User != "" {
@@ -41,8 +51,6 @@ func BuildItems(
 			pathStr := strings.Join(path, " > ")
 			pathLine = fmt.Sprintf("📁 %s", pathStr)
 		}
-
-		pathColors := getPathColors(cfg, path)
 
 		timeStr := entry.Timestamp.Format(time.RFC822)
 		timeLine := fmt.Sprintf("🕒 %s", timeStr)
