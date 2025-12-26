@@ -25,8 +25,42 @@ func main() {
 	refreshCacheFlag := flag.Bool("refresh-cache", false, "Clear the cache and continue loading")
 	printVersion := flag.Bool("version", false, "Print version information")
 	help := flag.Bool("help", false, "Show help")
-	filterTopLevelGroupsFlag := flag.String("filter-top-level-groups", "", "Only load specified top-level groups (comma-separated)")
+	topGroupsFlag := flag.String("top-groups", "", "Only load specified top-level groups (comma-separated)")
+
+	var cCache, cHistory, cFavorites, rCache, pVersion, hHelp bool
+	var tGroups string
+
+	flag.StringVar(&tGroups, "T", "", "Alias for --top-groups")
+	flag.BoolVar(&cCache, "C", false, "Alias for --clear-cache")
+	flag.BoolVar(&cHistory, "H", false, "Alias for --clear-history")
+	flag.BoolVar(&cFavorites, "F", false, "Alias for --clear-favorites")
+	flag.BoolVar(&rCache, "R", false, "Alias for --refresh-cache")
+	flag.BoolVar(&pVersion, "V", false, "Alias for --version")
+	flag.BoolVar(&hHelp, "h", false, "Alias for --help")
+
 	flag.Parse()
+
+	if cCache {
+		*clearCacheFlag = true
+	}
+	if cHistory {
+		*clearHistoryFlag = true
+	}
+	if cFavorites {
+		*clearFavoritesFlag = true
+	}
+	if rCache {
+		*refreshCacheFlag = true
+	}
+	if pVersion {
+		*printVersion = true
+	}
+	if hHelp {
+		*help = true
+	}
+	if tGroups != "" {
+		*topGroupsFlag = tGroups
+	}
 
 	if *help {
 		printHelp()
@@ -86,8 +120,8 @@ func main() {
 	}
 
 	var filterTopLevelGroups []string
-	if *filterTopLevelGroupsFlag != "" {
-		filterTopLevelGroups = strings.Split(*filterTopLevelGroupsFlag, ",")
+	if *topGroupsFlag != "" {
+		filterTopLevelGroups = strings.Split(*topGroupsFlag, ",")
 		for i := range filterTopLevelGroups {
 			filterTopLevelGroups[i] = strings.TrimSpace(filterTopLevelGroups[i])
 		}
@@ -137,15 +171,15 @@ func printHelp() {
 	fmt.Printf("https://github.com/gaetanlhf/SaSHa \n\n")
 	fmt.Println("Usage: sasha [options]")
 	fmt.Println("\nOptions:")
-	fmt.Println("  -clear-cache              Clear the import cache and exit")
-	fmt.Println("  -refresh-cache            Clear the cache but continue loading the application")
-	fmt.Println("  -clear-history            Clear connection history")
-	fmt.Println("  -clear-favorites          Clear favorites")
-	fmt.Println("  -filter-top-level-groups  Only load specified top-level groups (comma-separated)")
-	fmt.Println("  -version                  Print version information")
-	fmt.Println("  -help                     Show this help message")
+	fmt.Println("  --clear-cache, -C      Clear the import cache and exit")
+	fmt.Println("  --refresh-cache, -R    Clear the cache but continue loading the application")
+	fmt.Println("  --clear-history, -H    Clear connection history")
+	fmt.Println("  --clear-favorites, -F  Clear favorites")
+	fmt.Println("  --top-groups, -T       Only load specified top-level groups (comma-separated)")
+	fmt.Println("  --version, -V          Print version information")
+	fmt.Println("  --help, -h             Show this help message")
 	fmt.Println("\nEnvironment variables:")
-	fmt.Println("  SASHA_HOME                Path to SaSHa home directory (default: ~/.sasha)")
+	fmt.Println("  SASHA_HOME            Path to SaSHa home directory (default: ~/.sasha)")
 }
 
 func handleApplicationExit(finalModel tea.Model) {
