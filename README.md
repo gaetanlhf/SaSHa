@@ -750,13 +750,13 @@ SaSHa supports several command-line options:
 Usage: sasha [options]
 
 Options:
-  -clear-cache                 Clear the import cache and exit
-  -refresh-cache               Clear the cache but continue loading the application
-  -clear-history               Clear connection history
-  -clear-favorites             Clear favorites
-  -filter-top-level-groups     Only load specified top-level groups (comma-separated)
-  -version                     Print version information
-  -help                        Show this help message
+  --clear-cache, -C             Clear the import cache and exit
+  --refresh-cache, -R           Clear the cache but continue loading the application
+  --clear-history, -H           Clear connection history
+  --clear-favorites, -F         Clear favorites
+  --top-groups, -T              Only load specified top-level groups (comma-separated)
+  --version, -V                 Print version information
+  --help, -h                    Show this help message
 
 Environment variables:
   SASHA_HOME                   Path to SaSHa home directory (default: ~/.sasha)
@@ -764,20 +764,20 @@ Environment variables:
 
 #### Top-Level Group Filtering
 
-The `--filter-top-level-groups` option allows you to limit SaSHa to only display specific top-level groups from your configuration. This is particularly useful for separating different contexts (e.g., work vs. personal servers) or when you only need to work with a subset of your infrastructure.
+The `--top-groups` (or `-T`) option allows you to limit SaSHa to only display specific top-level groups from your configuration. This is particularly useful for separating different contexts (e.g., work vs. personal servers) or when you only need to work with a subset of your infrastructure.
 
 ```bash
 # Load only work-related servers
-sasha --filter-top-level-groups=Work
+sasha --top-groups=Work
 
 # Load only personal servers
-sasha --filter-top-level-groups=Personal
+sasha -T=Personal
 
 # Load multiple contexts
-sasha --filter-top-level-groups=Work,Personal
+sasha --top-groups=Work,Personal
 
 # Load only client-specific servers
-sasha --filter-top-level-groups=ClientA
+sasha -T=ClientA
 ```
 
 When using this option:
@@ -803,7 +803,7 @@ inventory:
           host: client.example.com
 ```
 
-Using `sasha --filter-top-level-groups=Work` will only show the Work group and its contents, effectively hiding Personal and ClientA groups for this session.
+Using `sasha --top-groups=Work` will only show the Work group and its contents, effectively hiding Personal and ClientA groups for this session.
 
 ### Navigation
 
