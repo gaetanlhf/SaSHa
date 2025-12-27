@@ -30,14 +30,18 @@ func main() {
 	var cCache, cHistory, cFavorites, rCache, pVersion, hHelp bool
 	var tGroups string
 
-	flag.StringVar(&tGroups, "T", "", "Alias for --top-groups")
-	flag.BoolVar(&cCache, "C", false, "Alias for --clear-cache")
-	flag.BoolVar(&cHistory, "H", false, "Alias for --clear-history")
-	flag.BoolVar(&cFavorites, "F", false, "Alias for --clear-favorites")
-	flag.BoolVar(&rCache, "R", false, "Alias for --refresh-cache")
-	flag.BoolVar(&pVersion, "V", false, "Alias for --version")
-	flag.BoolVar(&hHelp, "h", false, "Alias for --help")
+	flag.BoolVar(&cCache, "C", false, "Alias for -clear-cache")
+	flag.BoolVar(&cHistory, "H", false, "Alias for -clear-history")
+	flag.BoolVar(&cFavorites, "F", false, "Alias for -clear-favorites")
+	flag.BoolVar(&rCache, "R", false, "Alias for -refresh-cache")
+	flag.BoolVar(&pVersion, "V", false, "Alias for -version")
+	flag.BoolVar(&hHelp, "h", false, "Alias for -help")
+	flag.StringVar(&tGroups, "T", "", "Alias for -top-groups")
 
+	flag.Usage = func() {
+		fmt.Println()
+		printHelp()
+	}
 	flag.Parse()
 
 	if cCache {
