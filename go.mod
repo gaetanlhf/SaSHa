@@ -1,6 +1,6 @@
 module github.com/gaetanlhf/SaSHa
 
-go 1.24.2
+go 1.26
 
 require (
 	github.com/briandowns/spinner v1.23.2
